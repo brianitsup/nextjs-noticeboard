@@ -63,10 +63,10 @@ const formSchema = z.object({
 interface NoticeFormProps {
   notice?: Notice | null
   onClose: () => void
-  categories: Category[]
+  categories?: Category[]
 }
 
-export function NoticeForm({ notice, onClose, categories }: NoticeFormProps) {
+export function NoticeForm({ notice, onClose, categories = [] }: NoticeFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -84,6 +84,7 @@ export function NoticeForm({ notice, onClose, categories }: NoticeFormProps) {
         ...values,
         expires_at: values.expiresAt,
         posted_by: "Admin", // TODO: Replace with actual user
+        published: true, // Set default published state to true
       }
 
       if (notice?.id) {

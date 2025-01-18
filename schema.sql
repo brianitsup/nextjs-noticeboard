@@ -30,14 +30,15 @@ create table public.notices (
   expires_at timestamp with time zone not null,
   priority text default 'medium',
   is_sponsored boolean default false,
+  published boolean default false,
   created_at timestamp with time zone default now()
 );
 
 -- Add some sample data
-INSERT INTO public.notices (title, content, category_id, posted_by, expires_at, priority, is_sponsored)
+INSERT INTO public.notices (title, content, category_id, posted_by, expires_at, priority, is_sponsored, published)
 VALUES
-  ('Tech Conference 2024', 'Join us for the biggest tech conference of the year...', (SELECT id FROM categories WHERE name = 'event'), 'Tech Events Co.', '2024-05-15', 'high', false),
-  ('Premium Office Space', 'Luxury office spaces in downtown area...', (SELECT id FROM categories WHERE name = 'advertisement'), 'Commercial Real Estate Co.', '2024-04-21', 'high', true),
-  ('Community Meeting', 'Monthly community meeting this Saturday at the Town Hall.', (SELECT id FROM categories WHERE name = 'announcement'), 'Town Council', '2024-03-25', 'medium', false),
-  ('Summer Music Festival', 'Three days of live music, food, and entertainment in the city park.', (SELECT id FROM categories WHERE name = 'event'), 'City Events Committee', '2024-07-01', 'medium', false),
-  ('Designer Fashion Sale', 'Exclusive designer collections at special prices.', (SELECT id FROM categories WHERE name = 'advertisement'), 'Luxury Fashion House', '2024-04-25', 'high', true); 
+  ('Tech Conference 2024', 'Join us for the biggest tech conference of the year...', (SELECT id FROM categories WHERE name = 'event'), 'Tech Events Co.', '2024-05-15', 'high', false, true),
+  ('Premium Office Space', 'Luxury office spaces in downtown area...', (SELECT id FROM categories WHERE name = 'advertisement'), 'Commercial Real Estate Co.', '2024-04-21', 'high', true, true),
+  ('Community Meeting', 'Monthly community meeting this Saturday at the Town Hall.', (SELECT id FROM categories WHERE name = 'announcement'), 'Town Council', '2024-03-25', 'medium', false, true),
+  ('Summer Music Festival', 'Three days of live music, food, and entertainment in the city park.', (SELECT id FROM categories WHERE name = 'event'), 'City Events Committee', '2024-07-01', 'medium', false, true),
+  ('Designer Fashion Sale', 'Exclusive designer collections at special prices.', (SELECT id FROM categories WHERE name = 'advertisement'), 'Luxury Fashion House', '2024-04-25', 'high', true, false); 

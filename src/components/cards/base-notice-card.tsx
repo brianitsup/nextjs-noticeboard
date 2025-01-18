@@ -13,15 +13,19 @@ interface BaseNoticeCardProps {
 }
 
 function getCategoryIcon(category: Notice['category']) {
-  switch (category) {
+  if (!category) return null
+  
+  switch (category.name) {
     case 'announcement':
-      return <Bell className="h-4 w-4" />;
+      return <Bell className="h-4 w-4" />
     case 'advertisement':
-      return <Megaphone className="h-4 w-4" />;
+      return <Megaphone className="h-4 w-4" />
     case 'promotion':
-      return <AlertCircle className="h-4 w-4" />;
+      return <AlertCircle className="h-4 w-4" />
     case 'event':
-      return <Calendar className="h-4 w-4" />;
+      return <Calendar className="h-4 w-4" />
+    default:
+      return null
   }
 }
 
@@ -45,7 +49,11 @@ export function BaseNoticeCard({ notice, isSponsored = false }: BaseNoticeCardPr
       <CardHeader className="pb-3">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           {getCategoryIcon(notice.category)}
-          {notice.category.charAt(0).toUpperCase() + notice.category.slice(1)}
+          {notice.category?.name ? (
+            notice.category.name.charAt(0).toUpperCase() + notice.category.name.slice(1)
+          ) : (
+            'Uncategorized'
+          )}
         </span>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">

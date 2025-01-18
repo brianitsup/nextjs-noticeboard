@@ -19,4 +19,5 @@ export interface Notice {
   priority: 'low' | 'medium' | 'high';
   is_sponsored?: boolean;
   isSponsored?: boolean;
+  published?: boolean;
 } 

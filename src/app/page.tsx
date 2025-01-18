@@ -19,21 +19,30 @@ function transformNotice(notice: any): Notice {
     ...notice,
     postedAt: notice.posted_at,
     expiresAt: notice.expires_at,
-    isSponsored: notice.is_sponsored
+    isSponsored: notice.is_sponsored,
+    category: notice.category
   }
 }
 
 async function getNotices() {
   const { data: regularNotices, error: regularError } = await supabase
     .from('notices')
-    .select('*')
+    .select(`
+      *,
+      category:categories(*)
+    `)
     .eq('is_sponsored', false)
+    .eq('published', true)
     .order('posted_at', { ascending: false })
 
   const { data: sponsoredNotices, error: sponsoredError } = await supabase
     .from('notices')
-    .select('*')
+    .select(`
+      *,
+      category:categories(*)
+    `)
     .eq('is_sponsored', true)
+    .eq('published', true)
     .order('posted_at', { ascending: false })
 
   if (regularError || sponsoredError) {

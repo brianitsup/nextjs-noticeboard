@@ -43,6 +43,7 @@ export interface Database {
           expires_at: string
           priority: string
           is_sponsored: boolean
+          published: boolean
           created_at: string
         }
         Insert: {
@@ -55,6 +56,7 @@ export interface Database {
           expires_at: string
           priority?: string
           is_sponsored?: boolean
+          published?: boolean
           created_at?: string
         }
         Update: {
@@ -67,6 +69,7 @@ export interface Database {
           expires_at?: string
           priority?: string
           is_sponsored?: boolean
+          published?: boolean
           created_at?: string
         }
       }

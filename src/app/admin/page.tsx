@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import type { Notice, Category } from "@/types/notice";
@@ -88,6 +88,34 @@ export default function AdminDashboard() {
     fetchNotices();
   }
 
+  async function handleTogglePublish(notice: Notice) {
+    const { error } = await supabase
+      .from("notices")
+      .update({ published: !notice.published })
+      .eq("id", notice.id);
+
+    if (error) {
+      console.error("Error toggling notice publish state:", error);
+      return;
+    }
+
+    fetchNotices();
+  }
+
+  async function handleToggleSponsored(notice: Notice) {
+    const { error } = await supabase
+      .from("notices")
+      .update({ is_sponsored: !notice.is_sponsored })
+      .eq("id", notice.id);
+
+    if (error) {
+      console.error("Error toggling notice sponsored state:", error);
+      return;
+    }
+
+    fetchNotices();
+  }
+
   const handleCreateNotice = () => {
     setSelectedNotice(null);
     setIsCreateModalOpen(true);
@@ -145,6 +173,12 @@ export default function AdminDashboard() {
                     Posted At
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Sponsored
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Actions
                   </th>
                 </tr>
@@ -165,6 +199,34 @@ export default function AdminDashboard() {
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="text-sm text-gray-500">
                         {notice.postedAt ? formatDate(notice.postedAt) : 'N/A'}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm text-gray-500">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleTogglePublish(notice)}
+                          className={notice.published ? "text-green-600" : "text-gray-400"}
+                        >
+                          {notice.published ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm text-gray-500">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleSponsored(notice)}
+                          className={notice.is_sponsored ? "text-yellow-500" : "text-gray-400"}
+                        >
+                          <Sparkles className="h-4 w-4" />
+                        </Button>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
