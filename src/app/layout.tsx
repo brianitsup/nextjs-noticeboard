@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { createAuthClient } from "@/lib/supabase";
 import { Toaster } from "@/components/ui/toaster";
+import { Footer } from "@/components/ui/footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,8 +24,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
-        {children}
+      <body className={`${inter.variable} antialiased min-h-screen flex flex-col`}>
+        <div className="flex-1">
+          {children}
+        </div>
+        <Footer />
         <Toaster />
       </body>
     </html>
