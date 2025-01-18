@@ -80,9 +80,11 @@ export function NoticeForm({ notice, onClose, categories = [] }: NoticeFormProps
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      const { expiresAt, ...rest } = values;
       const noticeData = {
-        ...values,
-        expires_at: values.expiresAt,
+        ...rest,
+        expires_at: expiresAt,
+        posted_at: new Date().toISOString(),
         posted_by: "Admin", // TODO: Replace with actual user
         published: true, // Set default published state to true
       }
@@ -102,6 +104,7 @@ export function NoticeForm({ notice, onClose, categories = [] }: NoticeFormProps
       onClose()
     } catch (error: any) {
       console.error("Error saving notice:", error)
+      alert("Error saving notice: " + error.message)
     }
   }
 
