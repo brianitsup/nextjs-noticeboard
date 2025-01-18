@@ -1,203 +1,283 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createAuthClient } from "@/lib/supabase";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Notice } from "@/types/notice";
-import { Pencil, Trash2, Plus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { NoticeForm } from "@/components/admin/notice-form";
-import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
+import type { Notice, Category } from "@/types/notice";
+import { NoticeForm } from "@/components/notice-form";
+import { CategoryForm } from "@/components/category-form";
+import { formatDate } from "@/lib/date-utils";
 
 export default function AdminDashboard() {
   const [notices, setNotices] = useState<Notice[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const supabase = createAuthClient();
-  const { toast } = useToast();
-
-  const fetchNotices = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("notices")
-        .select("*")
-        .order("posted_at", { ascending: false });
-
-      if (error) throw error;
-      setNotices(data || []);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch notices: " + error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   useEffect(() => {
     fetchNotices();
+    fetchCategories();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this notice?")) return;
+  async function fetchNotices() {
+    const { data: noticesData, error: noticesError } = await supabase
+      .from("notices")
+      .select(`
+        *,
+        category:categories(*)
+      `)
+      .order("posted_at", { ascending: false });
 
-    try {
-      const { error } = await supabase.from("notices").delete().eq("id", id);
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Notice deleted successfully",
-      });
-      
-      fetchNotices();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to delete notice: " + error.message,
-        variant: "destructive",
-      });
+    if (noticesError) {
+      console.error("Error fetching notices:", noticesError);
+      return;
     }
-  };
 
-  const handleEdit = (notice: Notice) => {
-    setSelectedNotice(notice);
-    setIsDialogOpen(true);
-  };
-
-  const handleCreate = () => {
-    setSelectedNotice(null);
-    setIsDialogOpen(true);
-  };
-
-  const handleSave = async (formData: Partial<Notice>) => {
-    try {
-      if (selectedNotice) {
-        // Update existing notice
-        const { error } = await supabase
-          .from("notices")
-          .update(formData)
-          .eq("id", selectedNotice.id);
-        if (error) throw error;
-        toast({
-          title: "Success",
-          description: "Notice updated successfully",
-        });
-      } else {
-        // Create new notice
-        const { error } = await supabase.from("notices").insert(formData);
-        if (error) throw error;
-        toast({
-          title: "Success",
-          description: "Notice created successfully",
-        });
-      }
-
-      setIsDialogOpen(false);
-      fetchNotices();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to save notice: " + error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <div className="text-lg">Loading notices...</div>
-      </div>
-    );
+    setNotices(noticesData.map(notice => ({
+      ...notice,
+      postedAt: notice.posted_at,
+      expiresAt: notice.expires_at,
+      isSponsored: notice.is_sponsored
+    })));
   }
 
-  return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Manage Notices</h2>
-        <Button onClick={handleCreate} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" /> Create Notice
-        </Button>
-      </div>
+  async function fetchCategories() {
+    const { data: categoriesData, error: categoriesError } = await supabase
+      .from("categories")
+      .select("*")
+      .order("name", { ascending: true });
 
-      <div className="rounded-lg border">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Title
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Posted At
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {notices.map((notice) => (
-                <tr key={notice.id}>
-                  <td className="whitespace-nowrap px-6 py-4">{notice.title}</td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    {notice.category}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    {new Date(notice.posted_at || "").toLocaleDateString()}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(notice)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(notice.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
+    if (categoriesError) {
+      console.error("Error fetching categories:", categoriesError);
+      return;
+    }
+
+    setCategories(categoriesData);
+  }
+
+  async function handleDeleteNotice(id: string) {
+    const { error } = await supabase
+      .from("notices")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting notice:", error);
+      return;
+    }
+
+    fetchNotices();
+  }
+
+  async function handleDeleteCategory(id: string) {
+    const { error } = await supabase
+      .from("categories")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting category:", error);
+      return;
+    }
+
+    fetchCategories();
+    // Refresh notices as they might be affected by category deletion
+    fetchNotices();
+  }
+
+  const handleCreateNotice = () => {
+    setSelectedNotice(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCreateCategory = () => {
+    setSelectedCategory(null);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleEditNotice = (notice: Notice) => {
+    setSelectedNotice(notice);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setSelectedCategory(category);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCloseNoticeModal = () => {
+    setIsCreateModalOpen(false);
+    setSelectedNotice(null);
+    fetchNotices();
+  };
+
+  const handleCloseCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+    setSelectedCategory(null);
+    fetchCategories();
+  };
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Manage Notices</h2>
+          <Button onClick={handleCreateNotice} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" /> Create Notice
+          </Button>
+        </div>
+
+        <div className="rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Title
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Posted At
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {notices.map((notice) => (
+                  <tr key={notice.id}>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {notice.title}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm text-gray-500">
+                        {notice.category?.name || 'Unknown'}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm text-gray-500">
+                        {notice.postedAt ? formatDate(notice.postedAt) : 'N/A'}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditNotice(notice)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteNotice(notice.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {selectedNotice ? "Edit Notice" : "Create Notice"}
-            </DialogTitle>
-          </DialogHeader>
-          <NoticeForm
-            notice={selectedNotice}
-            onSubmit={handleSave}
-            onCancel={() => setIsDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <div>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Manage Categories</h2>
+          <Button onClick={handleCreateCategory} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" /> Create Category
+          </Button>
+        </div>
+
+        <div className="rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Description
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Icon
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {categories.map((category) => (
+                  <tr key={category.id}>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {category.name}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-500">
+                        {category.description}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm text-gray-500">
+                        {category.icon}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditCategory(category)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteCategory(category.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {isCreateModalOpen && (
+        <NoticeForm
+          notice={selectedNotice}
+          onClose={handleCloseNoticeModal}
+          categories={categories}
+        />
+      )}
+
+      {isCategoryModalOpen && (
+        <CategoryForm
+          category={selectedCategory}
+          onClose={handleCloseCategoryModal}
+        />
+      )}
     </div>
   );
 } 

@@ -9,12 +9,35 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          icon: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          icon: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          icon?: string
+          created_at?: string
+        }
+      }
       notices: {
         Row: {
           id: string
           title: string
           content: string
-          category: string
+          category_id: string
           posted_by: string
           posted_at: string
           expires_at: string
@@ -26,7 +49,7 @@ export interface Database {
           id?: string
           title: string
           content: string
-          category: string
+          category_id: string
           posted_by: string
           posted_at?: string
           expires_at: string
@@ -38,7 +61,7 @@ export interface Database {
           id?: string
           title?: string
           content?: string
-          category?: string
+          category_id?: string
           posted_by?: string
           posted_at?: string
           expires_at?: string
