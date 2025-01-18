@@ -37,58 +37,60 @@ export default function SignIn() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="w-full max-w-md space-y-8 rounded-lg border bg-card p-8 shadow">
-        <div>
-          <h2 className="text-2xl font-bold">Admin Sign In</h2>
-          <p className="text-sm text-muted-foreground">
-            Sign in to manage notices
-          </p>
+    <div className="flex min-h-screen flex-col bg-background">
+      <div className="flex flex-1 items-start justify-center pt-16">
+        <div className="w-full max-w-md space-y-8 rounded-lg border bg-card p-8 shadow">
+          <div>
+            <h2 className="text-2xl font-bold">Admin Sign In</h2>
+            <p className="text-sm text-muted-foreground">
+              Sign in to manage notices
+            </p>
+          </div>
+
+          {error && (
+            <div className="rounded-md bg-destructive/15 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSignIn} className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium">
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+          </form>
         </div>
-
-        {error && (
-          <div className="rounded-md bg-destructive/15 p-4 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSignIn} className="space-y-6">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </Button>
-        </form>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createAuthClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function AdminLayout({
   children,
@@ -11,13 +12,16 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
   const router = useRouter();
   const supabase = createAuthClient();
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      setSession(currentSession);
+      if (!currentSession) {
         router.push("/admin/signin");
       }
       setLoading(false);
@@ -27,8 +31,23 @@ export default function AdminLayout({
   }, [router, supabase]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/admin/signin");
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Success",
+        description: "You have been signed out successfully",
+        duration: 2000,
+      });
+      setTimeout(() => {
+        router.push("/");
+      }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out: " + error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -44,12 +63,14 @@ export default function AdminLayout({
       <header className="border-b">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <h1 className="text-xl font-bold">Notice Board Admin</h1>
-          <Button
-            variant="outline"
-            onClick={handleSignOut}
-          >
-            Sign Out
-          </Button>
+          {session && (
+            <Button
+              variant="outline"
+              onClick={handleSignOut}
+            >
+              Sign Out
+            </Button>
+          )}
         </div>
       </header>
 
