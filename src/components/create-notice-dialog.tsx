@@ -21,7 +21,7 @@ export function CreateNoticeDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Make a Post
+          Post a Notice
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">

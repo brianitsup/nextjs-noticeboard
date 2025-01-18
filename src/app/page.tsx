@@ -8,6 +8,9 @@ import { SupabaseStatus } from "@/components/supabase-status"
 import { NoticesDisplay } from "@/components/notices-display"
 import Link from "next/link"
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export const metadata: Metadata = {
   title: "Notice Board - Public Announcements & Ads",
   description: "A digital notice board for public announcements, advertisements, and promotions",
@@ -59,9 +62,11 @@ export default async function Home() {
               <Link href="/admin" passHref>
                 <Button variant="outline">Admin</Button>
               </Link>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" /> Make a Post
-              </Button>
+              <Link href="/create" passHref>
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" /> Post a Notice
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
