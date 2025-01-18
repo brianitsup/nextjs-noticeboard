@@ -1,12 +1,10 @@
 import { Metadata } from "next"
-import { Plus, Bell, Megaphone, AlertCircle, Calendar } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Bell, Megaphone, AlertCircle, Calendar } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/lib/supabase"
 import type { Notice } from "@/types/notice"
 import { SupabaseStatus } from "@/components/supabase-status"
 import { NoticesDisplay } from "@/components/notices-display"
-import Link from "next/link"
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -54,24 +52,6 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">Notice Board</h1>
-            <div className="flex gap-4">
-              <Link href="/admin" passHref>
-                <Button variant="outline">Admin</Button>
-              </Link>
-              <Link href="/create" passHref>
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" /> Post a Notice
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Filters */}
         <div className="mb-6 flex gap-4">

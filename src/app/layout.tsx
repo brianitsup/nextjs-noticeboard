@@ -4,6 +4,7 @@ import "./globals.css";
 import { createAuthClient } from "@/lib/supabase";
 import { Toaster } from "@/components/ui/toaster";
 import { Footer } from "@/components/ui/footer";
+import { HeaderWrapper } from "@/components/layout/header-wrapper";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,6 +27,7 @@ export default async function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} antialiased min-h-screen flex flex-col`}>
         <div className="flex-1">
+          <HeaderWrapper />
           {children}
         </div>
         <Footer />

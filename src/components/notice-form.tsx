@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { CheckCircle2, XCircle } from "lucide-react"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -47,12 +49,10 @@ const formSchema = z.object({
   priority: z.enum(["low", "medium", "high"], {
     required_error: "Please select a priority level.",
   }),
-  expiresAt: z.string().optional().refine(
+  expiresAt: z.date().nullable().refine(
     (date) => {
       if (!date) return true; // Optional field
-      const expiryDate = new Date(date);
-      const now = new Date();
-      return !isNaN(expiryDate.getTime()) && expiryDate > now;
+      return date > new Date();
     },
     {
       message: "Expiry date must be in the future",
@@ -76,6 +76,7 @@ export function NoticeForm({ onClose }: NoticeFormProps) {
       title: "",
       content: "",
       priority: "low",
+      expiresAt: null,
     },
   })
 
@@ -218,7 +219,18 @@ export function NoticeForm({ onClose }: NoticeFormProps) {
               <FormItem>
                 <FormLabel>Expiry Date (Optional)</FormLabel>
                 <FormControl>
-                  <Input type="datetime-local" {...field} />
+                  <DatePicker
+                    selected={field.value}
+                    onChange={(date: Date | null) => field.onChange(date)}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="MMMM d, yyyy h:mm aa"
+                    placeholderText="Select date and time"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    minDate={new Date()}
+                    isClearable
+                  />
                 </FormControl>
                 <FormDescription>
                   When should this notice expire? Leave empty for no expiry.
@@ -248,7 +260,7 @@ export function NoticeForm({ onClose }: NoticeFormProps) {
               Success
             </DialogTitle>
             <DialogDescription>
-              Your notice has been created successfully!
+              Your notice has been created successfully.
             </DialogDescription>
           </DialogHeader>
         </DialogContent>
@@ -259,18 +271,13 @@ export function NoticeForm({ onClose }: NoticeFormProps) {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <XCircle className="h-6 w-6 text-red-500" />
+              <XCircle className="h-6 w-6 text-destructive" />
               Error
             </DialogTitle>
             <DialogDescription>
               {errorMessage}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end">
-            <Button variant="outline" onClick={() => setShowErrorDialog(false)}>
-              Close
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </>
