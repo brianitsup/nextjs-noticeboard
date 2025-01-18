@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { createAuthClient } from "@/lib/supabase";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,15 +14,18 @@ export const metadata: Metadata = {
   description: "A digital notice board for public announcements, advertisements, and promotions",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = createAuthClient();
+
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
         {children}
+        <Toaster />
       </body>
     </html>
   );

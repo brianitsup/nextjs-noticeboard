@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase"
 import type { Notice } from "@/types/notice"
 import { SupabaseStatus } from "@/components/supabase-status"
 import { NoticesDisplay } from "@/components/notices-display"
+import Link from "next/link"
 
 export const metadata: Metadata = {
   title: "Notice Board - Public Announcements & Ads",
@@ -39,17 +40,6 @@ async function getNotices() {
     return { regularNotices: [], sponsoredNotices: [] }
   }
 
-  // Enhanced debug logging
-  if (regularNotices?.[0]) {
-    console.log('Sample notice data:', {
-      id: regularNotices[0].id,
-      title: regularNotices[0].title,
-      posted_at: regularNotices[0].posted_at,
-      expires_at: regularNotices[0].expires_at,
-      is_sponsored: regularNotices[0].is_sponsored
-    })
-  }
-
   return {
     regularNotices: (regularNotices || []).map(transformNotice),
     sponsoredNotices: (sponsoredNotices || []).map(transformNotice)
@@ -65,9 +55,14 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold">Notice Board</h1>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" /> Make a Post
-            </Button>
+            <div className="flex gap-4">
+              <Link href="/admin" passHref>
+                <Button variant="outline">Admin</Button>
+              </Link>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" /> Make a Post
+              </Button>
+            </div>
           </div>
         </div>
       </header>
