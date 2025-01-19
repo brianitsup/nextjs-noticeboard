@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/theme/theme-toggle"
 
 export function Header() {
   return (
@@ -12,11 +13,14 @@ export function Header() {
           <Link href="/" className="text-3xl font-bold hover:opacity-90">
             Notice Board
           </Link>
-          <Link href="/create" passHref>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" /> Post a Notice
-            </Button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Link href="/create" passHref>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" /> Post a Notice
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </header>

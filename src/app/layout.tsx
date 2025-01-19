@@ -4,6 +4,7 @@ import "./globals.css";
 import { RootProvider } from "@/components/providers/root-provider";
 import { HeaderWrapper } from "@/components/layout/header-wrapper";
 import { FooterWrapper } from "@/components/layout/footer-wrapper";
+import { ThemeProvider } from "@/components/theme/theme-provider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,15 +22,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased min-h-screen flex flex-col`}>
-        <RootProvider>
-          <div className="flex-1">
-            <HeaderWrapper />
-            {children}
-          </div>
-          <FooterWrapper />
-        </RootProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <RootProvider>
+            <div className="flex-1">
+              <HeaderWrapper />
+              {children}
+            </div>
+            <FooterWrapper />
+          </RootProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
