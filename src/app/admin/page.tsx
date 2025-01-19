@@ -8,6 +8,7 @@ import type { Notice, Category } from "@/types/notice";
 import { NoticeForm } from "@/components/notice-form";
 import { CategoryForm } from "@/components/admin/category-form";
 import { formatDate } from "@/lib/date-utils";
+import { getCategoryIcon } from "@/components/ui/category-icon";
 
 export default function AdminDashboard() {
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -298,8 +299,9 @@ export default function AdminDashboard() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm text-gray-500">
-                        {category.icon}
+                      <div className="text-sm text-gray-500 flex items-center gap-2">
+                        {getCategoryIcon(category)}
+                        <span className="text-xs text-muted-foreground">({category.icon})</span>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">

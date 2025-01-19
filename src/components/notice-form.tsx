@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
 import type { Notice, Category } from "@/types/notice"
+import { getCategoryIcon } from "@/components/ui/category-icon"
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -77,6 +78,11 @@ export function NoticeForm({ notice, onClose, categories = [] }: NoticeFormProps
       expiresAt: notice?.expiresAt ? new Date(notice.expiresAt) : null,
     },
   })
+
+  // Get the selected category for the SelectValue display
+  const getSelectedCategory = (categoryId: string) => {
+    return categories.find(cat => cat.id === categoryId)
+  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -163,13 +169,23 @@ export function NoticeForm({ notice, onClose, categories = [] }: NoticeFormProps
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
+                        <SelectValue>
+                          {field.value && (
+                            <span className="flex items-center gap-2">
+                              {getCategoryIcon(getSelectedCategory(field.value))}
+                              {getSelectedCategory(field.value)?.name || 'Select a category'}
+                            </span>
+                          )}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
-                          {category.name}
+                          <span className="flex items-center gap-2">
+                            {getCategoryIcon(category)}
+                            {category.name}
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
