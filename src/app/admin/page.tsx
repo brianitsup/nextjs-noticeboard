@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import type { Notice, Category } from "@/types/notice";
 import { NoticeForm } from "@/components/notice-form";
-import { CategoryForm } from "@/components/category-form";
+import { CategoryForm } from "@/components/admin/category-form";
 import { formatDate } from "@/lib/date-utils";
 
 export default function AdminDashboard() {
@@ -193,7 +193,9 @@ export default function AdminDashboard() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="text-sm text-gray-500">
-                        {notice.category?.name || 'Unknown'}
+                        {typeof notice.category === 'string' 
+                          ? notice.category 
+                          : notice.category?.name ?? 'Unknown'}
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">

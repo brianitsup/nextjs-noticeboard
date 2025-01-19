@@ -1,6 +1,6 @@
 export interface Category {
   id: string;
-  name: 'announcement' | 'advertisement' | 'promotion' | 'event';
+  name: string;
   description?: string;
   icon: string;
 }
@@ -10,7 +10,7 @@ export interface Notice {
   title: string;
   content: string;
   category_id: string;
-  category?: Category;
+  category?: Category | string;
   postedBy: string;
   posted_at?: string;
   postedAt?: Date | string;

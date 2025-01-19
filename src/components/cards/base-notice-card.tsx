@@ -15,7 +15,9 @@ interface BaseNoticeCardProps {
 function getCategoryIcon(category: Notice['category']) {
   if (!category) return null
   
-  switch (category.name) {
+  const categoryName = typeof category === 'string' ? category : category.name;
+  
+  switch (categoryName) {
     case 'announcement':
       return <Bell className="h-4 w-4" />
     case 'advertisement':
@@ -49,11 +51,12 @@ export function BaseNoticeCard({ notice, isSponsored = false }: BaseNoticeCardPr
       <CardHeader className="pb-3">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           {getCategoryIcon(notice.category)}
-          {notice.category?.name ? (
-            notice.category.name.charAt(0).toUpperCase() + notice.category.name.slice(1)
-          ) : (
-            'Uncategorized'
-          )}
+          {typeof notice.category === 'string' 
+            ? notice.category.charAt(0).toUpperCase() + notice.category.slice(1)
+            : notice.category?.name 
+              ? notice.category.name.charAt(0).toUpperCase() + notice.category.name.slice(1)
+              : 'Uncategorized'
+          }
         </span>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">

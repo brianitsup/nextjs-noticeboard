@@ -18,18 +18,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { IconSelect } from "@/components/ui/icon-select"
 import { supabase } from "@/lib/supabase"
 import type { Category } from "@/types/notice"
 
@@ -40,7 +34,7 @@ const formSchema = z.object({
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
   }),
-  icon: z.enum(["Bell", "Megaphone", "AlertCircle", "Calendar"], {
+  icon: z.string({
     required_error: "Please select an icon.",
   }),
 })
@@ -56,7 +50,7 @@ export function CategoryForm({ category, onClose }: CategoryFormProps) {
     defaultValues: {
       name: category?.name || "",
       description: category?.description || "",
-      icon: (category?.icon as "Bell" | "Megaphone" | "AlertCircle" | "Calendar") || "Bell",
+      icon: category?.icon || "Bell",
     },
   })
 
@@ -132,19 +126,12 @@ export function CategoryForm({ category, onClose }: CategoryFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Icon</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an icon" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Bell">Bell</SelectItem>
-                      <SelectItem value="Megaphone">Megaphone</SelectItem>
-                      <SelectItem value="AlertCircle">Alert Circle</SelectItem>
-                      <SelectItem value="Calendar">Calendar</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <IconSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
+                  </FormControl>
                   <FormDescription>
                     Choose an icon to represent this category.
                   </FormDescription>

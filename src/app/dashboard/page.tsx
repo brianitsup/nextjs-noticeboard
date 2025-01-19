@@ -62,7 +62,9 @@ export default function Dashboard() {
               <tr key={notice.id}>
                 <td className="whitespace-nowrap px-6 py-4">{notice.title}</td>
                 <td className="whitespace-nowrap px-6 py-4">
-                  {notice.category}
+                  {typeof notice.category === 'string' 
+                    ? notice.category
+                    : notice.category?.name ?? 'Uncategorized'}
                 </td>
                 <td className="whitespace-nowrap px-6 py-4">
                   {formatDate(notice.posted_at || null)}

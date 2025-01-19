@@ -75,8 +75,8 @@ export function NoticeForm({ notice, onSubmit, onCancel }: NoticeFormProps) {
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
         <Select
-          value={formData.category}
-          onValueChange={(value: Notice["category"]) =>
+          value={formData.category as string}
+          onValueChange={(value: string) =>
             setFormData({ ...formData, category: value })
           }
         >
