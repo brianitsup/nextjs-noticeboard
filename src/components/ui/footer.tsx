@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { createAuthClient } from "@/lib/supabase"
-import { cn } from "@/lib/utils"
+import { combineStyles } from "@/lib/style-utils"
 
 export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
   const [isOnline, setIsOnline] = React.useState(true)
@@ -28,7 +28,7 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
   }, [supabase])
 
   return (
-    <footer className={cn("border-t bg-background", className)}>
+    <footer className={combineStyles("border-t bg-background", className)}>
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* About Section */}
@@ -66,7 +66,7 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
             <h3 className="text-lg font-semibold">System Status</h3>
             <div className="flex items-center space-x-2">
               <div
-                className={cn(
+                className={combineStyles(
                   "h-2 w-2 rounded-full",
                   isOnline ? "bg-green-500" : "bg-red-500"
                 )}

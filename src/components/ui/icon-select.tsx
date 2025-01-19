@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import * as Icons from "lucide-react"
-import { cn } from "@/lib/utils"
+import { combineStyles } from "@/lib/style-utils"
 
 const iconGroups = {
   "Status & Alerts": [

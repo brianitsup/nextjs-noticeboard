@@ -15,11 +15,7 @@ export function NoticesDisplay({ regularNotices, sponsoredNotices }: NoticesDisp
     <>
       {/* Sponsored Posts */}
       {sponsoredNotices.length > 0 && (
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-4 w-4 text-yellow-500" />
-            <h2 className="text-lg font-semibold">Featured Posts</h2>
-          </div>
+        <div>
           <div className="px-4 sm:px-6 lg:px-8">
             <Carousel opts={{ 
               align: "start", 
@@ -37,13 +33,15 @@ export function NoticesDisplay({ regularNotices, sponsoredNotices }: NoticesDisp
       )}
 
       {/* Regular Posts Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {regularNotices.map((notice) => (
-          <div key={notice.id}>
-            {Cards.getCardComponentByCategory(notice)}
-          </div>
-        ))}
-      </div>
+      {regularNotices.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {regularNotices.map((notice) => (
+            <div key={notice.id}>
+              {Cards.getCardComponentByCategory(notice)}
+            </div>
+          ))}
+        </div>
+      )}
     </>
   )
 } 

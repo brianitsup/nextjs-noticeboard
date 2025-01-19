@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { createAuthClient } from "@/lib/supabase"
-import { cn } from "@/lib/utils"
+import { mergeStyles } from "@/lib/style-merge"
 
 export function AdminFooter({ className }: React.HTMLAttributes<HTMLElement>) {
   const [isOnline, setIsOnline] = React.useState(true)
@@ -28,7 +28,7 @@ export function AdminFooter({ className }: React.HTMLAttributes<HTMLElement>) {
   }, [supabase])
 
   return (
-    <footer className={cn("border-t bg-background", className)}>
+    <footer className={mergeStyles("border-t bg-background", className)}>
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
@@ -36,7 +36,7 @@ export function AdminFooter({ className }: React.HTMLAttributes<HTMLElement>) {
           </p>
           <div className="flex items-center space-x-2">
             <div
-              className={cn(
+              className={mergeStyles(
                 "h-2 w-2 rounded-full",
                 isOnline ? "bg-green-500" : "bg-red-500"
               )}
