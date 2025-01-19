@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { NoticeForm } from "@/components/notice-form"
+import { NoticeForm } from "@/components/admin/notice-form"
 import { Plus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import type { Category } from "@/types/notice"

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { NoticeForm } from "@/components/notice-form"
+import { NoticeForm } from "@/components/admin/notice-form"
 import { supabase } from "@/lib/supabase"
 import type { Category } from "@/types/notice"
 

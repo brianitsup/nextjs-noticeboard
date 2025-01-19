@@ -5,7 +5,7 @@ import { Plus, Pencil, Trash2, Eye, EyeOff, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import type { Notice, Category } from "@/types/notice";
-import { NoticeForm } from "@/components/notice-form";
+import { NoticeForm } from "@/components/admin/notice-form";
 import { CategoryForm } from "@/components/admin/category-form";
 import { formatDate } from "@/lib/date-utils";
 import { getCategoryIcon } from "@/components/ui/category-icon";

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import type { Notice } from "@/types/notice"
-import { NoticesDisplay } from "@/components/notices-display"
-import { NoticesFilter } from "@/components/notices-filter"
+import { NoticesDisplay } from "@/components/features/notices/notices-display"
+import { NoticesFilter } from "@/components/features/notices/notices-filter"
 import { dynamic, revalidate } from './config'
 
 function transformNotice(notice: any): Notice {
