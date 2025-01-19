@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import type { Notice } from "@/types/notice"
-import { SupabaseStatus } from "@/components/supabase-status"
 import { NoticesDisplay } from "@/components/notices-display"
 import { NoticesFilter } from "@/components/notices-filter"
 import { dynamic, revalidate } from './config'
@@ -90,9 +89,6 @@ export default function Home() {
             sponsoredNotices={[]}
           />
         </div>
-
-        {/* Supabase Connection Status */}
-        <SupabaseStatus />
       </main>
     </div>
   )
