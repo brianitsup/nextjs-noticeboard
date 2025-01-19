@@ -1,19 +1,12 @@
-import { Metadata } from "next"
-import { Bell, Megaphone, AlertCircle, Calendar, Search } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
+'use client'
+
+import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import type { Notice } from "@/types/notice"
 import { SupabaseStatus } from "@/components/supabase-status"
 import { NoticesDisplay } from "@/components/notices-display"
-
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
-export const metadata: Metadata = {
-  title: "Notice Board - Public Announcements & Ads",
-  description: "A digital notice board for public announcements, advertisements, and promotions",
-}
+import { NoticesFilter } from "@/components/notices-filter"
+import { dynamic, revalidate } from './config'
 
 function transformNotice(notice: any): Notice {
   return {
@@ -57,8 +50,17 @@ async function getNotices() {
   }
 }
 
-export default async function Home() {
-  const { regularNotices, sponsoredNotices } = await getNotices()
+export default function Home() {
+  const [notices, setNotices] = useState<{ regularNotices: Notice[], sponsoredNotices: Notice[] }>({ 
+    regularNotices: [], 
+    sponsoredNotices: [] 
+  })
+  const [filteredNotices, setFilteredNotices] = useState<Notice[]>([])
+
+  // Fetch notices on component mount
+  useEffect(() => {
+    getNotices().then(setNotices)
+  }, [])
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,69 +70,23 @@ export default async function Home() {
           <h2 className="text-2xl font-bold mb-6">Featured Notices</h2>
           <NoticesDisplay 
             regularNotices={[]}
-            sponsoredNotices={sponsoredNotices}
+            sponsoredNotices={notices.sponsoredNotices}
           />
         </div>
       </section>
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Filter Section */}
-        <div className="mb-8 space-y-4">
-          <h2 className="text-lg font-semibold">Filter Notices</h2>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search notices..." className="pl-9" />
-            </div>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="announcement">
-                  <span className="flex items-center gap-2">
-                    <Bell className="h-4 w-4" />
-                    Announcements
-                  </span>
-                </SelectItem>
-                <SelectItem value="advertisement">
-                  <span className="flex items-center gap-2">
-                    <Megaphone className="h-4 w-4" />
-                    Advertisements
-                  </span>
-                </SelectItem>
-                <SelectItem value="promotion">
-                  <span className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    Promotions
-                  </span>
-                </SelectItem>
-                <SelectItem value="event">
-                  <span className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Events
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <NoticesFilter 
+          notices={notices.regularNotices}
+          onFilteredNotices={setFilteredNotices}
+        />
 
         {/* Regular Notices */}
         <div>
           <h2 className="text-2xl font-bold mb-6">All Notices</h2>
           <NoticesDisplay 
-            regularNotices={regularNotices}
+            regularNotices={filteredNotices.length > 0 ? filteredNotices : notices.regularNotices}
             sponsoredNotices={[]}
           />
         </div>

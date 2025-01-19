@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Sparkles } from "lucide-react"
 import type { Notice } from "@/types/notice"
-import { mergeStyles } from "@/lib/style-merge"
-import { getCategoryIcon } from "@/lib/category-utils"
+import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/date-utils"
+import { getCategoryIcon } from "@/components/ui/category-icon"
 
 interface BaseNoticeCardProps {
   notice: Notice
@@ -18,7 +18,7 @@ export function BaseNoticeCard({ notice, isSponsored = false }: BaseNoticeCardPr
   const expiryDate = formatDate(notice.expires_at ?? notice.expiresAt ?? null)
 
   return (
-    <Card className={mergeStyles(
+    <Card className={cn(
       "transition-all hover:shadow-md relative flex flex-col h-full",
       isSponsored && "bg-gradient-to-b from-yellow-50/50 to-transparent"
     )}>
