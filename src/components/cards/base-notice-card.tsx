@@ -2,33 +2,15 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Sparkles, Bell, Megaphone, AlertCircle, Calendar } from "lucide-react"
+import { ArrowRight, Sparkles } from "lucide-react"
 import type { Notice } from "@/types/notice"
 import { cn } from "@/lib/utils"
+import { getCategoryIcon } from "@/lib/category-utils"
 import { formatDate } from "@/lib/date-utils"
 
 interface BaseNoticeCardProps {
   notice: Notice
   isSponsored?: boolean
-}
-
-function getCategoryIcon(category: Notice['category']) {
-  if (!category) return null
-  
-  const categoryName = typeof category === 'string' ? category : category.name;
-  
-  switch (categoryName) {
-    case 'announcement':
-      return <Bell className="h-4 w-4" />
-    case 'advertisement':
-      return <Megaphone className="h-4 w-4" />
-    case 'promotion':
-      return <AlertCircle className="h-4 w-4" />
-    case 'event':
-      return <Calendar className="h-4 w-4" />
-    default:
-      return null
-  }
 }
 
 export function BaseNoticeCard({ notice, isSponsored = false }: BaseNoticeCardProps) {

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 
 const iconGroups = {
   "Status & Alerts": [
+    "List",
     "Bell",
     "Megaphone",
     "AlertCircle",
@@ -41,6 +42,7 @@ const iconGroups = {
     "Tag",
     "Package",
     "Truck",
+    "Gift",
   ],
   "Events & Activities": [
     "Calendar",
@@ -48,9 +50,16 @@ const iconGroups = {
     "Cake",
     "Music",
     "Film",
+    "Video",
     "Camera",
     "Image",
-    "BookOpen",
+  ],
+  "Places & Venues": [
+    "MapPin",
+    "Hotel",
+    "Building",
+    "Home",
+    "Store",
   ],
   "Food & Drink": [
     "Coffee",
@@ -61,6 +70,7 @@ const iconGroups = {
     "School",
     "Presentation",
     "BookOpen",
+    "Wrench",
   ],
   "Communication": [
     "MessageCircle",
@@ -76,14 +86,16 @@ const iconGroups = {
     "Cloud",
     "Database",
     "ServerIcon",
+    "Settings",
+    "Wrench",
   ],
   "Security": [
     "ShieldCheck",
     "Lock",
     "Unlock",
-    "Key",
     "KeyRound",
     "LockKeyhole",
+    "Key",
   ],
 }
 

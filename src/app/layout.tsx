@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
+import { RootProvider } from "@/components/providers/root-provider";
 import { HeaderWrapper } from "@/components/layout/header-wrapper";
 import { FooterWrapper } from "@/components/layout/footer-wrapper";
-import { AuthProvider } from "@/components/auth-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -16,19 +15,6 @@ export const metadata: Metadata = {
   description: "A digital notice board for public announcements, advertisements, and promotions",
 };
 
-function ClientLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <div className="flex-1">
-        <HeaderWrapper />
-        {children}
-      </div>
-      <FooterWrapper />
-      <Toaster />
-    </AuthProvider>
-  );
-}
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,7 +23,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased min-h-screen flex flex-col`}>
-        <ClientLayout>{children}</ClientLayout>
+        <RootProvider>
+          <div className="flex-1">
+            <HeaderWrapper />
+            {children}
+          </div>
+          <FooterWrapper />
+        </RootProvider>
       </body>
     </html>
   );
