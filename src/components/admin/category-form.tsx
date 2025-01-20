@@ -24,8 +24,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { IconSelect } from "@/components/ui/icon-select"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import type { Category } from "@/types/notice"
+import { useToast } from "@/components/ui/use-toast"
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -39,12 +40,15 @@ const formSchema = z.object({
   }),
 })
 
-interface CategoryFormProps {
-  category?: Category | null
-  onClose: () => void
+export interface CategoryFormProps {
+  category?: Category | null;
+  onClose: () => void;
+  isOpen: boolean;
 }
 
-export function CategoryForm({ category, onClose }: CategoryFormProps) {
+export function CategoryForm({ category, onClose, isOpen }: CategoryFormProps) {
+  const supabase = createClient();
+  const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -56,26 +60,57 @@ export function CategoryForm({ category, onClose }: CategoryFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to create or edit categories",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const categoryData = {
+        ...values,
+        created_by: session.user.id,
+      };
+
       if (category?.id) {
         const { error } = await supabase
           .from("categories")
-          .update(values)
+          .update(categoryData)
           .eq("id", category.id)
 
-        if (error) throw error
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Category updated successfully",
+        });
       } else {
-        const { error } = await supabase.from("categories").insert([values])
-        if (error) throw error
+        const { error } = await supabase
+          .from("categories")
+          .insert([categoryData])
+
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Category created successfully",
+        });
       }
 
       onClose()
     } catch (error: any) {
-      console.error("Error saving category:", error)
+      console.error("Error saving category:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save category",
+        variant: "destructive",
+      });
     }
   }
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{category ? "Edit Category" : "Create Category"}</DialogTitle>

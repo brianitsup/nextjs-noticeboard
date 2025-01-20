@@ -4,39 +4,48 @@ import * as React from "react"
 import { usePathname } from "next/navigation"
 import { AdminFooter } from "@/components/ui/admin-footer"
 import { Footer } from "@/components/ui/footer"
-import { createAuthClient } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
+import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
 
-export function FooterWrapper() {
-  const pathname = usePathname()
-  const isAdminPage = pathname.startsWith('/admin')
-  const [isOnline, setIsOnline] = React.useState(true)
-  const supabase = createAuthClient()
+export function FooterWrapper({ children }: { children: React.ReactNode }) {
+  const [isLoading, setIsLoading] = React.useState(true)
+  const supabase = createClient()
+  const { toast } = useToast()
+  const router = useRouter()
 
   React.useEffect(() => {
-    const checkConnection = async () => {
+    const checkAuth = async () => {
       try {
-        const { data } = await supabase.from("notices").select("id").limit(1)
-        setIsOnline(true)
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          router.push("/auth/sign-in")
+          return
+        }
+        setIsLoading(false)
       } catch (error) {
-        setIsOnline(false)
+        console.error("Auth check error:", error)
+        toast({
+          title: "Error",
+          description: "Failed to verify authentication status",
+          variant: "destructive",
+        })
+        router.push("/auth/sign-in")
       }
     }
 
-    // Check initial connection
-    checkConnection()
+    checkAuth()
+  }, [router, toast])
 
-    // Set up periodic checks
-    const interval = setInterval(checkConnection, 30000) // Check every 30 seconds
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    )
+  }
 
-    return () => clearInterval(interval)
-  }, [supabase])
-
-  return (
-    <>
-      {!isAdminPage && <Footer />}
-      <AdminFooter isOnline={isOnline} />
-    </>
-  )
+  return <>{children}</>
 }
 
 export function FooterWrapperLegacy() {

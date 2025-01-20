@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { Notice } from "@/types/notice";
 import { formatDate } from "@/lib/date-utils";
 import Link from "next/link";
@@ -11,6 +11,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchNotices = async () => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("notices")
         .select("*")

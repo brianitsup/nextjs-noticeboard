@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { NoticeForm } from "@/components/admin/notice-form"
 import { Plus } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import type { Category } from "@/types/notice"
 
 export function CreateNoticeDialog() {
@@ -21,6 +21,7 @@ export function CreateNoticeDialog() {
 
   useEffect(() => {
     async function fetchCategories() {
+      const supabase = createClient()
       const { data, error } = await supabase
         .from("categories")
         .select("*")
@@ -54,7 +55,7 @@ export function CreateNoticeDialog() {
             Fill out the form below to create a new notice. Click submit when you're done.
           </DialogDescription>
         </DialogHeader>
-        <NoticeForm onClose={() => setOpen(false)} categories={categories} />
+        <NoticeForm onClose={() => setOpen(false)} categories={categories} isOpen={open} />
       </DialogContent>
     </Dialog>
   )

@@ -12,31 +12,43 @@ import {
   Megaphone,
   Newspaper,
   RefreshCw,
-  Calendar
+  Calendar,
+  HelpCircle,
+  Flag,
+  MessageCircle,
+  Star,
+  Users
 } from "lucide-react"
 import { Notice } from "@/types/notice"
 import { getStandardIconName } from "@/lib/categories"
 
-// Map of icon names to Lucide icon components
-const iconComponents: Record<string, LucideIcon> = {
-  AlertCircle,
-  AlertTriangle,
-  Bell,
-  Calendar,
-  FileText,
-  Info,
-  ListTodo,
-  Megaphone,
-  Newspaper,
-  RefreshCw
+interface CategoryIconProps {
+  name: string;
+  className?: string;
 }
 
-export function getCategoryIcon(category: Notice['category']) {
-  if (!category) return null;
-  
-  const categoryName = typeof category === 'string' ? category : category.name;
-  const iconName = getStandardIconName(categoryName)
-  const IconComponent = iconComponents[iconName]
-  
-  return IconComponent ? <IconComponent className="h-4 w-4" /> : <FileText className="h-4 w-4" />
+// Map of icon names to Lucide icon components
+const iconComponents: Record<string, LucideIcon> = {
+  alert: AlertCircle,
+  announcement: Bell,
+  event: Calendar,
+  general: FileText,
+  important: Flag,
+  help: HelpCircle,
+  info: Info,
+  discussion: MessageCircle,
+  featured: Star,
+  community: Users,
+}
+
+export function CategoryIcon({ name, className = "h-4 w-4" }: CategoryIconProps) {
+  const Icon = iconComponents[name] || Info;
+  return <Icon className={className} />;
+}
+
+export function getCategoryIcon(iconName: string) {
+  // Convert the icon name to match the standardized category names
+  const standardizedName = iconName.toLowerCase();
+  const Icon = iconComponents[standardizedName] || Info;
+  return <Icon className="h-4 w-4" />;
 } 

@@ -1,4 +1,4 @@
-import { supabase } from "./supabase"
+import { createClient } from "@/lib/supabase/client"
 
 // Define the standard icon mapping for categories
 export const standardCategoryIcons = {
@@ -18,6 +18,7 @@ export type CategoryName = keyof typeof standardCategoryIcons
 
 // Function to update category icons in the database to match our standard icons
 export async function updateCategoryIcons() {
+  const supabase = createClient()
   const { data: categories, error: fetchError } = await supabase
     .from('categories')
     .select('id, name, icon')

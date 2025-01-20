@@ -5,7 +5,7 @@ import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Notice } from "@/types/notice"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import { getCategoryIcon } from "@/components/ui/category-icon"
 
 interface NoticesFilterProps {
@@ -24,6 +24,7 @@ export function NoticesFilter({ notices, onFilteredNotices }: NoticesFilterProps
 
   useEffect(() => {
     const fetchCategories = async () => {
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('categories')
         .select('id, name, icon')

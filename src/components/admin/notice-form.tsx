@@ -29,13 +29,13 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import type { Notice, Category } from "@/types/notice"
 import { getCategoryIcon } from "@/components/ui/category-icon"
+import { useToast } from "@/components/ui/use-toast"
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -61,13 +61,16 @@ const formSchema = z.object({
   ),
 })
 
-interface NoticeFormProps {
-  notice?: Notice | null
-  onClose: () => void
-  categories?: Category[]
+export interface NoticeFormProps {
+  notice?: Notice | null;
+  categories: Category[];
+  onClose: () => void;
+  isOpen: boolean;
 }
 
-export function NoticeForm({ notice, onClose, categories = [] }: NoticeFormProps) {
+export function NoticeForm({ notice, categories, onClose, isOpen }: NoticeFormProps) {
+  const supabase = createClient();
+  const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -86,13 +89,24 @@ export function NoticeForm({ notice, onClose, categories = [] }: NoticeFormProps
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to create or edit notices",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { expiresAt, ...rest } = values;
       const noticeData = {
         ...rest,
         expires_at: expiresAt,
         posted_at: new Date().toISOString(),
-        posted_by: "Admin", // TODO: Replace with actual user
-        published: true, // Set default published state to true
+        posted_by: session.user.email,
+        created_by: session.user.id,
+        published: true,
       }
 
       if (notice?.id) {
@@ -101,21 +115,36 @@ export function NoticeForm({ notice, onClose, categories = [] }: NoticeFormProps
           .update(noticeData)
           .eq("id", notice.id)
 
-        if (error) throw error
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Notice updated successfully",
+        });
       } else {
-        const { error } = await supabase.from("notices").insert([noticeData])
-        if (error) throw error
+        const { error } = await supabase
+          .from("notices")
+          .insert([noticeData])
+
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: "Notice created successfully",
+        });
       }
 
       onClose()
     } catch (error: any) {
       console.error("Error saving notice:", error)
-      alert("Error saving notice: " + error.message)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save notice",
+        variant: "destructive",
+      });
     }
   }
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{notice ? "Edit Notice" : "Create Notice"}</DialogTitle>
@@ -172,7 +201,11 @@ export function NoticeForm({ notice, onClose, categories = [] }: NoticeFormProps
                         <SelectValue>
                           {field.value && (
                             <span className="flex items-center gap-2">
-                              {getCategoryIcon(getSelectedCategory(field.value))}
+                              {(() => {
+                                const category = getSelectedCategory(field.value);
+                                const icon = category?.icon;
+                                return icon ? getCategoryIcon(icon) : null;
+                              })()}
                               {getSelectedCategory(field.value)?.name || 'Select a category'}
                             </span>
                           )}
@@ -183,7 +216,7 @@ export function NoticeForm({ notice, onClose, categories = [] }: NoticeFormProps
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           <span className="flex items-center gap-2">
-                            {getCategoryIcon(category)}
+                            {category.icon && getCategoryIcon(category.icon)}
                             {category.name}
                           </span>
                         </SelectItem>

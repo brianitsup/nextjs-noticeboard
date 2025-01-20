@@ -1,95 +1,122 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase"
-import type { Notice } from "@/types/notice"
-import { NoticesDisplay } from "@/components/features/notices/notices-display"
-import { NoticesFilter } from "@/components/features/notices/notices-filter"
-import { dynamic, revalidate } from './config'
-
-function transformNotice(notice: any): Notice {
-  return {
-    ...notice,
-    postedAt: notice.posted_at,
-    expiresAt: notice.expires_at,
-    isSponsored: notice.is_sponsored,
-    category: notice.category
-  }
-}
-
-async function getNotices() {
-  const { data: regularNotices, error: regularError } = await supabase
-    .from('notices')
-    .select(`
-      *,
-      category:categories(*)
-    `)
-    .eq('is_sponsored', false)
-    .eq('published', true)
-    .order('posted_at', { ascending: false })
-
-  const { data: sponsoredNotices, error: sponsoredError } = await supabase
-    .from('notices')
-    .select(`
-      *,
-      category:categories(*)
-    `)
-    .eq('is_sponsored', true)
-    .eq('published', true)
-    .order('posted_at', { ascending: false })
-
-  if (regularError || sponsoredError) {
-    console.error('Error fetching notices:', regularError || sponsoredError)
-    return { regularNotices: [], sponsoredNotices: [] }
-  }
-
-  return {
-    regularNotices: (regularNotices || []).map(transformNotice),
-    sponsoredNotices: (sponsoredNotices || []).map(transformNotice)
-  }
-}
+import { useEffect, useState } from "react"
+import type { Notice, Category } from "@/types/notice"
+import { NoticeCard } from "@/components/notice-card"
+import { CategoryFilter } from "@/components/category-filter"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function Home() {
-  const [notices, setNotices] = useState<{ regularNotices: Notice[], sponsoredNotices: Notice[] }>({ 
-    regularNotices: [], 
-    sponsoredNotices: [] 
-  })
-  const [filteredNotices, setFilteredNotices] = useState<Notice[]>([])
+  const [regularNotices, setRegularNotices] = useState<Notice[]>([])
+  const [sponsoredNotices, setSponsoredNotices] = useState<Notice[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const { toast } = useToast()
 
-  // Fetch notices on component mount
   useEffect(() => {
-    getNotices().then(setNotices)
-  }, [])
+    fetchData()
+  }, [selectedCategory])
+
+  function transformNotice(notice: any): Notice {
+    return {
+      ...notice,
+      category: notice["categories!notices_category_id_fkey"],
+      postedAt: notice.posted_at,
+      postedBy: notice.posted_by,
+      expiresAt: notice.expires_at,
+      isSponsored: notice.is_sponsored
+    }
+  }
+
+  async function fetchData() {
+    try {
+      // Fetch categories from our API
+      const categoriesRes = await fetch('/api/categories')
+      if (!categoriesRes.ok) {
+        throw new Error('Failed to fetch categories')
+      }
+      const categoriesData = await categoriesRes.json()
+      setCategories(categoriesData || [])
+
+      // Fetch notices from our API
+      const noticesUrl = selectedCategory 
+        ? `/api/notices?category=${selectedCategory}`
+        : '/api/notices'
+      
+      const noticesRes = await fetch(noticesUrl)
+      if (!noticesRes.ok) {
+        throw new Error('Failed to fetch notices')
+      }
+      const noticesData = await noticesRes.json()
+      
+      // Separate notices into regular and sponsored
+      const regular: Notice[] = []
+      const sponsored: Notice[] = []
+      
+      noticesData.forEach((notice: any) => {
+        const transformedNotice = transformNotice(notice)
+        if (transformedNotice.isSponsored) {
+          sponsored.push(transformedNotice)
+        } else {
+          regular.push(transformedNotice)
+        }
+      })
+
+      setRegularNotices(regular)
+      setSponsoredNotices(sponsored)
+    } catch (error) {
+      console.error('Error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to load data. Please try refreshing the page.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleCategoryChange = (categoryId: string | null) => {
+    setSelectedCategory(categoryId)
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section with Sponsored Notices */}
-      <section className="border-b bg-gradient-to-b from-muted/50 to-background py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold mb-6">Featured Notices</h2>
-          <NoticesDisplay 
-            regularNotices={[]}
-            sponsoredNotices={notices.sponsoredNotices}
-          />
+    <main className="container mx-auto px-4 py-8">
+      <h1 className="mb-8 text-3xl font-bold">Notice Board</h1>
+      
+      {/* Sponsored Notices Section */}
+      {sponsoredNotices.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold mb-4">Featured Notices</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {sponsoredNotices.map((notice) => (
+              <NoticeCard key={notice.id} notice={notice} />
+            ))}
+          </div>
+        </section>
+      )}
+      
+      {/* Category Filter */}
+      <div className="mb-8">
+        <CategoryFilter
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onChange={handleCategoryChange}
+        />
+      </div>
+
+      {/* Regular Notices */}
+      <section>
+        <h2 className="text-2xl font-bold mb-4">All Notices</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {regularNotices.map((notice) => (
+            <NoticeCard key={notice.id} notice={notice} />
+          ))}
+          {regularNotices.length === 0 && (
+            <p className="col-span-full text-center text-gray-500">
+              No notices found.
+            </p>
+          )}
         </div>
       </section>
-
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Filter Section */}
-        <NoticesFilter 
-          notices={notices.regularNotices}
-          onFilteredNotices={setFilteredNotices}
-        />
-
-        {/* Regular Notices */}
-        <div>
-          <h2 className="text-2xl font-bold mb-6">All Notices</h2>
-          <NoticesDisplay 
-            regularNotices={filteredNotices.length > 0 ? filteredNotices : notices.regularNotices}
-            sponsoredNotices={[]}
-          />
-        </div>
-      </main>
-    </div>
+    </main>
   )
 }

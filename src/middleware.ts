@@ -6,24 +6,31 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
-  // Refresh session if expired
+  // Refresh session if expired - required for Server Components
   const { data: { session } } = await supabase.auth.getSession()
 
   // Handle admin routes
   if (req.nextUrl.pathname.startsWith('/admin')) {
     // Allow access to signin page
     if (req.nextUrl.pathname === '/admin/signin') {
-      // If already authenticated, redirect to admin dashboard
-      if (session) {
-        return NextResponse.redirect(new URL('/admin', req.url))
-      }
-      // Allow access to signin page for non-authenticated users
       return res
     }
 
     // For all other admin routes, require authentication
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.redirect(new URL('/admin/signin', req.url))
+    }
+
+    // Check if user has admin role
+    const { data: userDetails } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (userDetails?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/', req.url))
     }
   }
 
