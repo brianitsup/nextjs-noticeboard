@@ -20,11 +20,11 @@ export function BaseNoticeCard({ notice, isSponsored = false }: BaseNoticeCardPr
   return (
     <Card className={cn(
       "transition-all hover:shadow-md relative flex flex-col h-full",
-      isSponsored && "bg-gradient-to-b from-yellow-50/50 to-transparent"
+      isSponsored && "bg-gradient-to-b from-yellow-50/50 to-transparent dark:from-[#323232] dark:to-[#202020]"
     )}>
       {isSponsored && (
         <div className="absolute top-3 right-3">
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100/50 text-yellow-800">
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100/50 text-yellow-800 dark:bg-[#323232] dark:text-[#989898]">
             <Sparkles className="h-3 w-3" />
             Sponsored
           </span>

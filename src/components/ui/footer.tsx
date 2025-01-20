@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Facebook, Linkedin, Twitter } from "lucide-react"
+import { FacebookIcon, LinkedInIcon, XIcon } from "@/components/ui/social-icons"
 
 export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
   return (
@@ -42,32 +42,38 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
           {/* Socials */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Socials</h3>
-            <div className="flex space-x-4">
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a 
-                href="https://linkedin.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Linkedin className="h-5 w-5" />
-              </a>
-              <a 
-                href="https://x.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Twitter className="h-5 w-5" />
-              </a>
-            </div>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>
+                <a 
+                  href="#" 
+                  className="flex items-center gap-2 hover:text-foreground transition-colors"
+                  aria-label="Facebook"
+                >
+                  <FacebookIcon />
+                  <span>Facebook</span>
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#" 
+                  className="flex items-center gap-2 hover:text-foreground transition-colors"
+                  aria-label="LinkedIn"
+                >
+                  <LinkedInIcon />
+                  <span>LinkedIn</span>
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#" 
+                  className="flex items-center gap-2 hover:text-foreground transition-colors"
+                  aria-label="X (formerly Twitter)"
+                >
+                  <XIcon />
+                  <span>X (Twitter)</span>
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
