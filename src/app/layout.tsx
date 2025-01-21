@@ -5,7 +5,7 @@ import { RootProvider } from "@/components/providers/root-provider";
 import { FooterWrapper } from "@/components/layout/footer-wrapper";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
-import { SiteHeader } from "@/components/site-header";
+import { ClientLayout } from "@/components/layout/client-layout";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,11 +32,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <RootProvider>
-            <SiteHeader />
-            <div className="flex-1">
+            <ClientLayout>
               {children}
-            </div>
-            <FooterWrapper />
+            </ClientLayout>
           </RootProvider>
         </ThemeProvider>
         <Toaster />

@@ -72,13 +72,13 @@ export default function AdminLayout({
             <nav className="flex items-center space-x-6 text-sm font-medium">
               <a
                 href="/admin"
-                className="transition-colors hover:text-foreground/80"
+                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin' ? 'text-foreground' : 'text-foreground/60'}`}
               >
                 Notices
               </a>
               <a
                 href="/admin/users"
-                className="transition-colors hover:text-foreground/80"
+                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/users' ? 'text-foreground' : 'text-foreground/60'}`}
               >
                 Users
               </a>
