@@ -26,6 +26,7 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
       content: "",
       excerpt: "",
       published: false,
+      tags: [],
     }
   );
 
@@ -56,31 +57,75 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
 
     try {
       const supabase = createClient();
+
+      // Validate required fields
+      if (!formData.title?.trim()) {
+        throw new Error("Title is required");
+      }
+      if (!formData.content?.trim()) {
+        throw new Error("Content is required");
+      }
+      if (!formData.excerpt?.trim()) {
+        // Generate excerpt from content if not provided
+        formData.excerpt = formData.content
+          .replace(/<[^>]*>/g, '') // Remove HTML tags
+          .slice(0, 150) // Get first 150 characters
+          .trim() + '...'; // Add ellipsis
+      }
+
       const slug = formData.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") ?? "";
-      const data = {
-        ...formData,
+      
+      // Ensure tags is always a valid array
+      const tags = Array.isArray(formData.tags) ? formData.tags : [];
+      
+      // Clean and prepare tags
+      const cleanedTags = tags
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0)
+        .map(tag => tag.replace(/[^a-zA-Z0-9\s-]/g, ''));
+
+      const preparedData = {
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        excerpt: formData.excerpt.trim(),
+        published: formData.published || false,
         slug,
         author_id: userId,
         updated_at: new Date().toISOString(),
+        // Ensure we send null for empty arrays to let PostgreSQL use its default
+        tags: cleanedTags.length > 0 ? cleanedTags : null
       };
 
-      if (post?.id) {
-        const { error } = await supabase
-          .from("blog_posts")
-          .update(data)
-          .eq("id", post.id);
+      // Debug log to see what we're sending
+      console.log('Sending to Supabase:', JSON.stringify(preparedData, null, 2));
 
-        if (error) throw error;
+      if (post?.id) {
+        const { data, error } = await supabase
+          .from("blog_posts")
+          .update(preparedData)
+          .eq("id", post.id)
+          .select();
+
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
+        console.log('Update response:', data);
         toast({
           title: "Success",
           description: "Blog post updated successfully",
         });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("blog_posts")
-          .insert([{ ...data, created_at: new Date().toISOString() }]);
+          .insert([{ ...preparedData, created_at: new Date().toISOString() }])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
+        console.log('Insert response:', data);
         toast({
           title: "Success",
           description: "Blog post created successfully",
@@ -100,13 +145,29 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
     }
   };
 
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>{post ? "Edit Blog Post" : "Create New Blog Post"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form 
+          onSubmit={(e) => {
+            const target = e.target as HTMLElement;
+            const isEditorButton = target.closest('.tiptap-toolbar-button');
+            if (isEditorButton) {
+              e.preventDefault();
+              return;
+            }
+            handleSubmit(e);
+          }} 
+          className="space-y-6"
+        >
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
@@ -118,21 +179,32 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="excerpt">Excerpt</Label>
+            <Label htmlFor="excerpt">
+              Excerpt <span className="text-sm text-gray-500">(optional - will be generated from content if empty)</span>
+            </Label>
             <Input
               id="excerpt"
-              value={formData.excerpt}
-              onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-              required
+              value={formData.excerpt || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({ 
+                  ...formData, 
+                  excerpt: value.length > 150 ? value.slice(0, 150) : value 
+                });
+              }}
+              placeholder="Brief summary of the post (max 150 characters)"
+              maxLength={150}
             />
           </div>
 
           <div className="space-y-2">
             <Label>Content</Label>
-            <BlogEditor
-              content={formData.content ?? ""}
-              onChange={(content) => setFormData({ ...formData, content })}
-            />
+            <div className="editor-container" onClick={e => e.stopPropagation()}>
+              <BlogEditor
+                content={formData.content ?? ""}
+                onChange={(content) => setFormData({ ...formData, content })}
+              />
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -146,8 +218,43 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
             <Label htmlFor="published">Published</Label>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags (comma-separated)</Label>
+            <Input
+              id="tags"
+              value={Array.isArray(formData.tags) ? formData.tags.join(", ") : ""}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                // Handle empty input case
+                if (!inputValue || !inputValue.trim()) {
+                  setFormData({ ...formData, tags: [] });
+                  return;
+                }
+
+                // Split by comma, clean up, and ensure unique values
+                const newTags = Array.from(
+                  new Set(
+                    inputValue
+                      .split(",")
+                      .map(tag => tag.trim())
+                      .filter(tag => tag.length > 0)
+                      .map(tag => tag.replace(/[^a-zA-Z0-9\s-]/g, ''))
+                  )
+                );
+
+                setFormData({ ...formData, tags: newTags });
+              }}
+              placeholder="Enter tags separated by commas (letters, numbers, spaces, and hyphens only)"
+            />
+            <p className="text-sm text-gray-500">
+              Current tags: {Array.isArray(formData.tags) && formData.tags.length > 0 
+                ? formData.tags.join(", ") 
+                : "No tags"}
+            </p>
+          </div>
+
           <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
