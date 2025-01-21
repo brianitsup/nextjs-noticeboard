@@ -1,123 +1,124 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter, usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
-  const { toast } = useToast();
+  const supabase = createClient();
 
   useEffect(() => {
+    let isRedirecting = false;
+
     const checkAuth = async () => {
+      if (isRedirecting) return;
+
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          router.push("/admin/signin");
+        // First check if we have a session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          isRedirecting = true;
+          router.replace('/auth/admin-signin');
           return;
         }
-        setIsLoading(false);
+
+        // Then get the user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          isRedirecting = true;
+          router.replace('/auth/admin-signin');
+          return;
+        }
+
+        // Check if user has admin access
+        const { data: userRole, error: roleError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (roleError || !userRole || userRole.role !== 'admin') {
+          await supabase.auth.signOut();
+          isRedirecting = true;
+          router.replace('/auth/admin-signin');
+          return;
+        }
       } catch (error) {
-        console.error("Auth check error:", error);
-        toast({
-          title: "Error",
-          description: "Failed to verify authentication status",
-          variant: "destructive",
-        });
-        router.push("/admin/signin");
+        console.error('Auth check error:', error);
+        isRedirecting = true;
+        router.replace('/auth/admin-signin');
       }
     };
 
+    // Set up auth state change listener
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        router.replace('/auth/admin-signin');
+      }
+    });
+
+    // Run auth check immediately
     checkAuth();
-  }, [router, toast, supabase]);
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router, pathname, supabase]);
 
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
-      router.push("/admin/signin");
+      router.replace('/auth/admin-signin');
     } catch (error) {
-      console.error("Sign out error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive",
-      });
+      console.error('Sign out error:', error);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
-          <div className="mr-4 hidden md:flex">
-            <Link href="/admin" className="mr-6 flex items-center space-x-2">
-              <span className="hidden font-bold sm:inline-block">
-                Notice Board Admin
-              </span>
-            </Link>
+          <div className="mr-4 flex">
+            <a href="/admin" className="mr-6 flex items-center space-x-2">
+              <span className="font-bold">Notice Board Admin</span>
+            </a>
             <nav className="flex items-center space-x-6 text-sm font-medium">
-              <Link
+              <a
                 href="/admin"
-                className={cn(
-                  "transition-colors hover:text-foreground/80",
-                  pathname === "/admin"
-                    ? "text-foreground"
-                    : "text-foreground/60"
-                )}
+                className="transition-colors hover:text-foreground/80"
               >
                 Notices
-              </Link>
-              <Link
+              </a>
+              <a
                 href="/admin/users"
-                className={cn(
-                  "transition-colors hover:text-foreground/80",
-                  pathname?.startsWith("/admin/users")
-                    ? "text-foreground"
-                    : "text-foreground/60"
-                )}
+                className="transition-colors hover:text-foreground/80"
               >
                 Users
-              </Link>
+              </a>
             </nav>
           </div>
-          <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-            <div className="w-full flex-1 md:w-auto md:flex-none">
-              {/* Add search or other controls here */}
-            </div>
-            <nav className="flex items-center">
-              <Button
-                variant="ghost"
-                className="mr-6 text-base hover:bg-transparent hover:text-foreground/80"
-                onClick={handleSignOut}
-              >
-                Sign Out
-              </Button>
-              <ThemeToggle />
-            </nav>
-          </div>
+          <div className="flex-1" />
+          <button
+            onClick={handleSignOut}
+            className="px-4 py-2 hover:opacity-80"
+          >
+            Sign Out
+          </button>
         </div>
       </header>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 container py-6">
+        {children}
+      </main>
     </div>
   );
 } 

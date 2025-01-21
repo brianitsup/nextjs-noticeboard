@@ -21,7 +21,7 @@ export function NoticeCard({ notice }: NoticeCardProps) {
     : notice.category?.name || 'Uncategorized';
 
   return (
-    <Card className={notice.is_sponsored ? "border-yellow-500" : undefined}>
+    <Card className={notice.isSponsored ? "border-yellow-500" : undefined}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -34,7 +34,7 @@ export function NoticeCard({ notice }: NoticeCardProps) {
               </>
             )}
           </div>
-          {notice.is_sponsored && (
+          {notice.isSponsored && (
             <Badge variant="outline" className="border-yellow-500 text-yellow-500">
               <Sparkles className="mr-1 h-3 w-3" />
               Sponsored
@@ -47,9 +47,9 @@ export function NoticeCard({ notice }: NoticeCardProps) {
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">{notice.content}</p>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Posted: {formatDate(notice.posted_at)}</span>
-            {notice.expires_at && (
-              <span>Expires: {formatDate(notice.expires_at)}</span>
+            <span>Posted: {formatDate(notice.postedAt || null)}</span>
+            {notice.expiresAt && (
+              <span>Expires: {formatDate(notice.expiresAt || null)}</span>
             )}
           </div>
         </div>

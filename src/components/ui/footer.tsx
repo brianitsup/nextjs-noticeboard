@@ -1,14 +1,15 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { FacebookIcon, LinkedInIcon, XIcon } from "@/components/ui/social-icons"
+import { Facebook, Twitter, Instagram, Github } from "lucide-react"
 
 export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
   return (
     <footer className={cn("border-t bg-background", className)}>
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="container px-4 py-8">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* About Section */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Notice Board</h3>
@@ -20,60 +21,64 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
           {/* Quick Links */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Quick Links</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2">
               <li>
-                <a href="/about" className="hover:text-foreground">
+                <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground">
                   About
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/blog" className="hover:text-foreground">
+                <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground">
                   Blog
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/pricing" className="hover:text-foreground">
+                <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground">
                   Pricing
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Socials */}
+          {/* Support */}
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold">Socials</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <h3 className="text-lg font-semibold">Support</h3>
+            <ul className="space-y-2">
               <li>
-                <a 
-                  href="#" 
-                  className="flex items-center gap-2 hover:text-foreground transition-colors"
-                  aria-label="Facebook"
-                >
-                  <FacebookIcon />
-                  <span>Facebook</span>
-                </a>
+                <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground">
+                  Contact Us
+                </Link>
               </li>
               <li>
-                <a 
-                  href="#" 
-                  className="flex items-center gap-2 hover:text-foreground transition-colors"
-                  aria-label="LinkedIn"
-                >
-                  <LinkedInIcon />
-                  <span>LinkedIn</span>
-                </a>
+                <Link href="/faq" className="text-sm text-muted-foreground hover:text-foreground">
+                  FAQ
+                </Link>
               </li>
               <li>
-                <a 
-                  href="#" 
-                  className="flex items-center gap-2 hover:text-foreground transition-colors"
-                  aria-label="X (formerly Twitter)"
-                >
-                  <XIcon />
-                  <span>X (Twitter)</span>
-                </a>
+                <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">
+                  Privacy Policy
+                </Link>
               </li>
             </ul>
+          </div>
+
+          {/* Social Links */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold">Connect</h3>
+            <div className="flex space-x-4">
+              <Link href="https://facebook.com" className="text-muted-foreground hover:text-foreground">
+                <Facebook className="h-5 w-5" />
+              </Link>
+              <Link href="https://twitter.com" className="text-muted-foreground hover:text-foreground">
+                <Twitter className="h-5 w-5" />
+              </Link>
+              <Link href="https://instagram.com" className="text-muted-foreground hover:text-foreground">
+                <Instagram className="h-5 w-5" />
+              </Link>
+              <Link href="https://github.com" className="text-muted-foreground hover:text-foreground">
+                <Github className="h-5 w-5" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>

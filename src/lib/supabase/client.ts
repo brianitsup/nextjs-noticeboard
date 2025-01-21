@@ -1,5 +1,5 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import type { Database } from '@/types/supabase';
+import { Database } from '@/types/supabase';
 
 // Debug function to safely stringify objects with circular references
 const safeStringify = (obj: any, indent = 2) => {

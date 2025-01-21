@@ -3,37 +3,49 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
+  // Create a response object to modify
   const res = NextResponse.next()
+  
+  // Create the Supabase client
   const supabase = createMiddlewareClient({ req, res })
 
-  // Refresh session if expired - required for Server Components
-  const { data: { session } } = await supabase.auth.getSession()
-
-  // Handle admin routes
+  // Check if this is an admin route
   if (req.nextUrl.pathname.startsWith('/admin')) {
-    // Allow access to signin page
-    if (req.nextUrl.pathname === '/admin/signin') {
+    try {
+      // Check session
+      const { data: { session }, error } = await supabase.auth.getSession()
+
+      // If no session, redirect to sign-in
+      if (!session) {
+        const redirectUrl = new URL('/auth/admin-signin', req.url)
+        redirectUrl.searchParams.set('returnTo', req.nextUrl.pathname)
+        return NextResponse.redirect(redirectUrl)
+      }
+
+      // Check if user has admin access
+      const { data: userRole, error: roleError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (roleError || !userRole || userRole.role !== 'admin') {
+        await supabase.auth.signOut();
+        const redirectUrl = new URL('/auth/admin-signin', req.url)
+        redirectUrl.searchParams.set('returnTo', req.nextUrl.pathname)
+        return NextResponse.redirect(redirectUrl)
+      }
+
       return res
-    }
-
-    // For all other admin routes, require authentication
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.redirect(new URL('/admin/signin', req.url))
-    }
-
-    // Check if user has admin role
-    const { data: userDetails } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (userDetails?.role !== 'admin') {
-      return NextResponse.redirect(new URL('/', req.url))
+    } catch (error) {
+      console.error('Middleware error:', error)
+      const redirectUrl = new URL('/auth/admin-signin', req.url)
+      redirectUrl.searchParams.set('returnTo', req.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
     }
   }
 
+  // Not an admin route, proceed normally
   return res
 }
 

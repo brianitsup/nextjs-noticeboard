@@ -5,6 +5,7 @@ import type { Notice, Category } from "@/types/notice"
 import { NoticeCard } from "@/components/notice-card"
 import { CategoryFilter } from "@/components/category-filter"
 import { useToast } from "@/components/ui/use-toast"
+import { Carousel } from "@/components/ui/carousel"
 
 export default function Home() {
   const [regularNotices, setRegularNotices] = useState<Notice[]>([])
@@ -80,18 +81,21 @@ export default function Home() {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-3xl font-bold">Notice Board</h1>
-      
-      {/* Sponsored Notices Section */}
+      {/* Sponsored Notices Carousel */}
       {sponsoredNotices.length > 0 && (
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Featured Notices</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mb-12">
+          <Carousel opts={{ 
+            align: "start",
+            loop: true,
+            slidesToScroll: 1,
+          }}>
             {sponsoredNotices.map((notice) => (
-              <NoticeCard key={notice.id} notice={notice} />
+              <div key={notice.id} className="flex-[0_0_100%] sm:flex-[0_0_50%] lg:flex-[0_0_33.333%] min-w-0 pl-1 pr-1 sm:pl-2 sm:pr-2">
+                <NoticeCard notice={notice} />
+              </div>
             ))}
-          </div>
-        </section>
+          </Carousel>
+        </div>
       )}
       
       {/* Category Filter */}
