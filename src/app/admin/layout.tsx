@@ -85,14 +85,22 @@ export default function AdminLayout({
             </nav>
           </div>
           <div className="flex-1" />
-          <form action="/auth/signout" method="POST">
-            <button
-              type="submit"
-              className="px-4 py-2 hover:opacity-80"
+          <div className="flex items-center space-x-4">
+            <a
+              href="/admin/profile"
+              className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/profile' ? 'text-foreground' : 'text-foreground/60'}`}
             >
-              Sign Out
-            </button>
-          </form>
+              Profile
+            </a>
+            <form action="/auth/signout" method="POST">
+              <button
+                type="submit"
+                className="px-4 py-2 hover:opacity-80"
+              >
+                Sign Out
+              </button>
+            </form>
+          </div>
         </div>
       </header>
       <main className="flex-1 container py-6">
