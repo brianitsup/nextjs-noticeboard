@@ -78,6 +78,12 @@ export default function AdminLayout({
                 Notices
               </a>
               <a
+                href="/admin/blog"
+                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/blog' ? 'text-foreground' : 'text-foreground/60'}`}
+              >
+                Blog
+              </a>
+              <a
                 href="/admin/users"
                 className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/users' ? 'text-foreground' : 'text-foreground/60'}`}
               >

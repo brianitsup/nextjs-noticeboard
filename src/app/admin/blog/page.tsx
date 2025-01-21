@@ -5,19 +5,67 @@ import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import type { BlogPost } from "@/types/blog";
-import { BlogPostForm } from "@/components/admin/blog-post-form";
 import { formatDate } from "@/lib/date-utils";
 import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
+import type { UserRole } from "@/types/user";
 
 export default function BlogManagement() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
-    fetchPosts();
+    checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (userRole && ['admin', 'editor', 'moderator'].includes(userRole)) {
+      fetchPosts();
+    }
+  }, [userRole]);
+
+  async function checkAuth() {
+    try {
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      
+      if (authError) {
+        throw authError;
+      }
+
+      if (!session) {
+        router.push('/auth/admin-signin');
+        return;
+      }
+
+      // Get user role from metadata
+      const role = session.user.role || session.user.app_metadata?.role || 'user';
+
+      if (!['admin', 'editor', 'moderator'].includes(role)) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to access this area.",
+          variant: "destructive",
+        });
+        router.push('/');
+        return;
+      }
+
+      setUserRole(role as UserRole);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Auth check error:", error);
+      toast({
+        title: "Authentication Error",
+        description: "Please sign in to access this area.",
+        variant: "destructive",
+      });
+      router.push('/auth/admin-signin');
+    }
+  }
 
   async function fetchPosts() {
     const supabase = createClient();
@@ -35,6 +83,16 @@ export default function BlogManagement() {
   }
 
   async function handleDeletePost(id: string) {
+    // Only admins and editors can delete posts
+    if (!['admin', 'editor'].includes(userRole ?? '')) {
+      toast({
+        title: "Error",
+        description: "You don't have permission to delete blog posts",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const supabase = createClient();
     const { error } = await supabase
       .from("blog_posts")
@@ -59,6 +117,7 @@ export default function BlogManagement() {
   }
 
   async function handleTogglePublish(post: BlogPost) {
+    // All roles can toggle publish status
     const supabase = createClient();
     const { error } = await supabase
       .from("blog_posts")
@@ -83,29 +142,45 @@ export default function BlogManagement() {
   }
 
   const handleCreatePost = () => {
-    setSelectedPost(null);
-    setIsCreateModalOpen(true);
+    // Only admins and editors can create posts
+    if (!['admin', 'editor'].includes(userRole ?? '')) {
+      toast({
+        title: "Error",
+        description: "Only administrators and editors can create blog posts",
+        variant: "destructive",
+      });
+      return;
+    }
+    router.push('/admin/blog/new');
   };
 
   const handleEditPost = (post: BlogPost) => {
-    setSelectedPost(post);
-    setIsCreateModalOpen(true);
+    // All roles can edit posts
+    router.push(`/admin/blog/${post.id}`);
   };
 
-  const handleCloseModal = () => {
-    setIsCreateModalOpen(false);
-    setSelectedPost(null);
-    fetchPosts();
-  };
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!userRole) {
+    return null;
+  }
 
   return (
     <div className="space-y-8">
       <div>
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold">Manage Blog Posts</h2>
-          <Button onClick={handleCreatePost} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" /> Create Post
-          </Button>
+          {['admin', 'editor'].includes(userRole) && (
+            <Button onClick={handleCreatePost} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" /> Create Post
+            </Button>
+          )}
         </div>
 
         <div className="rounded-lg border">
@@ -168,13 +243,15 @@ export default function BlogManagement() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeletePost(post.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {['admin', 'editor'].includes(userRole) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeletePost(post.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -184,12 +261,6 @@ export default function BlogManagement() {
           </div>
         </div>
       </div>
-
-      <BlogPostForm
-        isOpen={isCreateModalOpen}
-        onClose={handleCloseModal}
-        post={selectedPost}
-      />
     </div>
   );
 } 
