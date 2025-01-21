@@ -55,18 +55,42 @@ export default function UserProfile() {
         // Get additional user data
         const { data: userData, error: userError } = await supabase
           .from('users')
-          .select('*')
+          .select('id, email, role, created_at')
           .eq('id', session.user.id)
           .single();
 
-        if (userError) throw userError;
+        if (userError) {
+          // If user doesn't exist in the users table, create it
+          if (userError.code === 'PGRST116') {
+            const { data: newUser, error: createError } = await supabase
+              .from('users')
+              .upsert([
+                {
+                  id: session.user.id,
+                  email: session.user.email,
+                  role: 'admin',
+                  created_at: session.user.created_at
+                }
+              ])
+              .select('id, email, role, created_at')
+              .single();
 
-        // Set user data combining session and database info
-        setUser({
-          ...session.user,
-          role: userData?.role || 'admin', // Fallback to admin since we verified it in session
-          created_at: session.user.created_at,
-        });
+            if (createError) throw createError;
+            
+            setUser({
+              ...session.user,
+              ...newUser
+            });
+          } else {
+            throw userError;
+          }
+        } else {
+          // Set user data combining session and database info
+          setUser({
+            ...session.user,
+            ...userData
+          });
+        }
 
         setFormData({
           email: session.user.email || "",
@@ -78,8 +102,8 @@ export default function UserProfile() {
         // Still set basic user data from session if DB query fails
         setUser({
           ...session.user,
-          role: 'admin', // We know they're admin from session check
-          created_at: session.user.created_at,
+          role: 'admin',
+          created_at: session.user.created_at || new Date().toISOString(),
         });
 
         setFormData({
@@ -126,8 +150,24 @@ export default function UserProfile() {
       }
 
       if (Object.keys(updates).length > 0) {
-        const { error } = await supabase.auth.updateUser(updates);
-        if (error) throw error;
+        // Update auth user
+        const { error: authError } = await supabase.auth.updateUser(updates);
+        if (authError) throw authError;
+
+        // Update users table using upsert to handle both update and insert
+        if (updates.email) {
+          const { error: dbError } = await supabase
+            .from('users')
+            .upsert({
+              id: user.id,
+              email: updates.email,
+              role: user.role,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+          
+          if (dbError) throw dbError;
+        }
 
         toast({
           title: "Success",
@@ -182,7 +222,7 @@ export default function UserProfile() {
           </div>
           <div>
             <Label>Account Created</Label>
-            <div className="mt-1 text-lg">{formatDate(user.created_at)}</div>
+            <div className="mt-1 text-lg">{user.created_at ? formatDate(user.created_at) : 'Not available'}</div>
           </div>
         </div>
       ) : (
