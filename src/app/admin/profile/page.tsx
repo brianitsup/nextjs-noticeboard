@@ -199,9 +199,9 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="container max-w-2xl space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">User Profile</h1>
+    <div className="container max-w-2xl">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-2xl font-bold">User Profile</h2>
         <Button
           onClick={() => setIsEditing(!isEditing)}
           variant="outline"
@@ -210,47 +210,47 @@ export default function UserProfile() {
         </Button>
       </div>
 
-      {!isEditing ? (
-        <div className="rounded-lg border p-6 space-y-4">
-          <div>
-            <Label>Email</Label>
-            <div className="mt-1 text-lg">{user.email}</div>
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+        {!isEditing ? (
+          <div className="p-6 space-y-4">
+            <div className="grid gap-2">
+              <Label className="text-sm font-medium">Email</Label>
+              <div className="text-sm">{user.email}</div>
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-sm font-medium">Role</Label>
+              <div className="text-sm capitalize">{user.role}</div>
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-sm font-medium">Account Created</Label>
+              <div className="text-sm">{user.created_at ? formatDate(user.created_at) : 'Not available'}</div>
+            </div>
           </div>
-          <div>
-            <Label>Role</Label>
-            <div className="mt-1 text-lg capitalize">{user.role}</div>
-          </div>
-          <div>
-            <Label>Account Created</Label>
-            <div className="mt-1 text-lg">{user.created_at ? formatDate(user.created_at) : 'Not available'}</div>
-          </div>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-            />
-          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <div className="grid gap-2">
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="newPassword">New Password (leave blank to keep unchanged)</Label>
-            <Input
-              id="newPassword"
-              type="password"
-              value={formData.newPassword}
-              onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-            />
-          </div>
+            <div className="grid gap-2">
+              <Label htmlFor="newPassword" className="text-sm font-medium">New Password (leave blank to keep unchanged)</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={formData.newPassword}
+                onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+              />
+            </div>
 
-          {formData.newPassword && (
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm New Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -258,18 +258,18 @@ export default function UserProfile() {
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               />
             </div>
-          )}
 
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </form>
-      )}
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="submit"
+                disabled={isLoading}
+              >
+                {isLoading ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 } 

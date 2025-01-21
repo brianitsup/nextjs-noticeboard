@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { User, LogOut } from 'lucide-react';
 
 export default function AdminLayout({
   children,
@@ -85,19 +86,19 @@ export default function AdminLayout({
             </nav>
           </div>
           <div className="flex-1" />
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <a
               href="/admin/profile"
-              className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/profile' ? 'text-foreground' : 'text-foreground/60'}`}
+              className={`flex h-8 w-8 items-center justify-center transition-colors hover:text-foreground/80 ${pathname === '/admin/profile' ? 'text-foreground' : 'text-foreground/60'}`}
             >
-              Profile
+              <User className="h-4 w-4" />
             </a>
             <form action="/auth/signout" method="POST">
               <button
                 type="submit"
-                className="px-4 py-2 hover:opacity-80"
+                className="flex h-8 w-8 items-center justify-center transition-colors hover:text-foreground/80 text-foreground/60"
               >
-                Sign Out
+                <LogOut className="h-4 w-4" />
               </button>
             </form>
           </div>
