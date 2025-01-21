@@ -20,7 +20,7 @@ export default function AdminLayout({
       if (isRedirecting) return;
 
       try {
-        // First check if we have a session
+        // Get the current session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError || !session) {
@@ -29,24 +29,10 @@ export default function AdminLayout({
           return;
         }
 
-        // Then get the user
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError || !user) {
-          isRedirecting = true;
-          router.replace('/auth/admin-signin');
-          return;
-        }
+        // Check if user has admin role from session metadata
+        const isAdmin = session.user.role === 'admin' || session.user.app_metadata?.role === 'admin';
 
-        // Check if user has admin access
-        const { data: userRole, error: roleError } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-
-        if (roleError || !userRole || userRole.role !== 'admin') {
-          await supabase.auth.signOut();
+        if (!isAdmin) {
           isRedirecting = true;
           router.replace('/auth/admin-signin');
           return;
@@ -75,15 +61,6 @@ export default function AdminLayout({
     };
   }, [router, pathname, supabase]);
 
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.replace('/auth/admin-signin');
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
-  };
-
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -108,12 +85,14 @@ export default function AdminLayout({
             </nav>
           </div>
           <div className="flex-1" />
-          <button
-            onClick={handleSignOut}
-            className="px-4 py-2 hover:opacity-80"
-          >
-            Sign Out
-          </button>
+          <form action="/auth/signout" method="POST">
+            <button
+              type="submit"
+              className="px-4 py-2 hover:opacity-80"
+            >
+              Sign Out
+            </button>
+          </form>
         </div>
       </header>
       <main className="flex-1 container py-6">

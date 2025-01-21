@@ -23,68 +23,44 @@ export default function AdminSignIn() {
     setIsLoading(true);
 
     try {
-      console.log("Attempting sign in...");
-      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
+      // Sign in with password
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      console.log("Sign in response:", {
-        session: session ? { 
-          user: { 
-            id: session.user.id,
-            email: session.user.email,
-            role: session.user.role,
-            app_metadata: session.user.app_metadata,
-            user_metadata: session.user.user_metadata
-          }
-        } : null,
-        error: signInError
-      });
-
-      if (signInError || !session?.user) {
+      if (signInError || !data?.user) {
         throw signInError || new Error('Sign in failed');
       }
 
-      // Check admin access using session metadata
-      console.log("Checking admin access for user:", session.user.id);
-      
-      // Get the current session to ensure we have the latest metadata
-      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Error getting current session:", sessionError);
-        throw new Error("Error verifying user access");
-      }
-
-      console.log("Current session:", {
-        user: currentSession?.user ? {
-          id: currentSession.user.id,
-          email: currentSession.user.email,
-          role: currentSession.user.role,
-          app_metadata: currentSession.user.app_metadata,
-          user_metadata: currentSession.user.user_metadata
-        } : null
-      });
-
       // Check if user has admin role in their metadata
-      const userRole = currentSession?.user?.role;
-      const isAdmin = userRole === 'admin' || currentSession?.user?.app_metadata?.role === 'admin';
+      const isAdmin = data.user.role === 'admin' || data.user.app_metadata?.role === 'admin';
 
       if (!isAdmin) {
+        // Sign out if not admin
         await supabase.auth.signOut();
         throw new Error("You don't have permission to access the admin area");
       }
 
-      console.log("Admin access confirmed, redirecting...");
+      // Get the current session to ensure we have the latest metadata
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error("Failed to verify session");
+      }
+
+      // Add a small delay to ensure session is set
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Redirect to admin dashboard
       router.push('/admin');
-      router.refresh();
     } catch (error: any) {
       console.error("Sign in error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to sign in",
         variant: "destructive",
+        duration: 5000, // Show toast for 5 seconds
       });
       setIsLoading(false);
     }

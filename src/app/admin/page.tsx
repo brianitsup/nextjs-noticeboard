@@ -46,21 +46,15 @@ export default function AdminDashboard() {
       }
 
       if (!session) {
-        router.push('/admin/signin');
+        router.push('/auth/admin-signin');
         return;
       }
 
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+      // Check if user has admin role from session metadata
+      const isAdmin = session.user.role === 'admin' || session.user.app_metadata?.role === 'admin';
+      const role = isAdmin ? 'admin' : 'user';
 
-      if (userError) {
-        throw userError;
-      }
-
-      if (!userData || !['admin', 'editor', 'moderator'].includes(userData.role)) {
+      if (!isAdmin) {
         toast({
           title: "Access Denied",
           description: "You don't have permission to access this area.",
@@ -70,7 +64,7 @@ export default function AdminDashboard() {
         return;
       }
 
-      setUserRole(userData.role as UserRole);
+      setUserRole(role as UserRole);
       setIsLoading(false);
     } catch (error) {
       logSupabaseError(error, "Checking authentication");
@@ -79,7 +73,7 @@ export default function AdminDashboard() {
         description: "Please sign in to access this area.",
         variant: "destructive",
       });
-      router.push('/admin/signin');
+      router.push('/auth/admin-signin');
     }
   }
 

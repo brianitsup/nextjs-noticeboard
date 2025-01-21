@@ -12,8 +12,13 @@ export async function middleware(req: NextRequest) {
   // Check if this is an admin route
   if (req.nextUrl.pathname.startsWith('/admin')) {
     try {
-      // Check session
-      const { data: { session }, error } = await supabase.auth.getSession()
+      // Refresh the session to ensure we have the latest data
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError) {
+        console.error('Session error:', sessionError)
+        throw sessionError
+      }
 
       // If no session, redirect to sign-in
       if (!session) {
@@ -22,20 +27,17 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(redirectUrl)
       }
 
-      // Check if user has admin access
-      const { data: userRole, error: roleError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+      // Check if user has admin role from session metadata
+      const isAdmin = session.user.role === 'admin' || session.user.app_metadata?.role === 'admin'
 
-      if (roleError || !userRole || userRole.role !== 'admin') {
-        await supabase.auth.signOut();
+      if (!isAdmin) {
+        await supabase.auth.signOut()
         const redirectUrl = new URL('/auth/admin-signin', req.url)
         redirectUrl.searchParams.set('returnTo', req.nextUrl.pathname)
         return NextResponse.redirect(redirectUrl)
       }
 
+      // Set the session in the response
       return res
     } catch (error) {
       console.error('Middleware error:', error)
