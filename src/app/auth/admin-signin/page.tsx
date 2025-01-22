@@ -53,7 +53,7 @@ export default function AdminSignIn() {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Redirect to admin dashboard
-      router.push('/admin');
+      router.push('/admin/dashboard');
     } catch (error: any) {
       console.error("Sign in error:", error);
       toast({

@@ -63,19 +63,31 @@ export default function AdminLayout({
   }, [router, pathname, supabase]);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
           <div className="mr-4 flex">
-            <a href="/admin" className="mr-6 flex items-center space-x-2">
+            <a href="/admin/dashboard" className="mr-6 flex items-center space-x-2">
               <span className="font-bold">Notice Board Admin</span>
             </a>
             <nav className="flex items-center space-x-6 text-sm font-medium">
               <a
-                href="/admin"
-                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin' ? 'text-foreground' : 'text-foreground/60'}`}
+                href="/admin/dashboard"
+                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/dashboard' ? 'text-foreground' : 'text-foreground/60'}`}
+              >
+                Dashboard
+              </a>
+              <a
+                href="/admin/notices"
+                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/notices' ? 'text-foreground' : 'text-foreground/60'}`}
               >
                 Notices
+              </a>
+              <a
+                href="/admin/categories"
+                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/categories' ? 'text-foreground' : 'text-foreground/60'}`}
+              >
+                Categories
               </a>
               <a
                 href="/admin/blog"
