@@ -9,13 +9,13 @@ import { useSupabaseStatus } from "@/hooks/use-supabase-status"
 export function FooterWrapper() {
   const pathname = usePathname()
   const isOnline = useSupabaseStatus()
+  const isAdminRoute = pathname.startsWith("/admin")
 
-  // Only show admin footer in admin routes
-  if (!pathname.startsWith("/admin")) {
-    return null
+  if (isAdminRoute) {
+    return <AdminFooter isOnline={isOnline} />
   }
 
-  return <AdminFooter isOnline={isOnline} />
+  return <Footer />
 }
 
 export function FooterWrapperLegacy() {

@@ -13,11 +13,11 @@ interface NoticeCardProps {
 
 export function NoticeCard({ notice }: NoticeCardProps) {
   const categoryIcon = typeof notice.category === 'string' 
-    ? notice.category
+    ? 'FileText'  // Default icon if category is just a string
     : notice.category?.icon || 'FileText';
 
   const categoryName = typeof notice.category === 'string'
-    ? notice.category.charAt(0).toUpperCase() + notice.category.slice(1)
+    ? notice.category
     : notice.category?.name || 'Uncategorized';
 
   return (
@@ -25,14 +25,10 @@ export function NoticeCard({ notice }: NoticeCardProps) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {notice.category && (
-              <>
-                {getCategoryIcon(categoryIcon)}
-                <span className="text-sm text-muted-foreground">
-                  {categoryName}
-                </span>
-              </>
-            )}
+            {getCategoryIcon(categoryIcon)}
+            <span className="text-sm text-muted-foreground">
+              {categoryName}
+            </span>
           </div>
           {notice.isSponsored && (
             <Badge variant="outline" className="border-yellow-500 text-yellow-500">

@@ -21,7 +21,7 @@ export default function Home() {
   function transformNotice(notice: any): Notice {
     return {
       ...notice,
-      category: notice["categories!notices_category_id_fkey"],
+      category: notice.categories || notice.category,
       postedAt: notice.posted_at,
       postedBy: notice.posted_by,
       expiresAt: notice.expires_at,

@@ -82,6 +82,14 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
           </div>
         </div>
       </div>
+      {/* Site Credits */}
+      <div className="border-t">
+        <div className="container px-4 py-6">
+          <p className="text-center text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Notice Board. All rights reserved.
+          </p>
+        </div>
+      </div>
     </footer>
   )
 } 

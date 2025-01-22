@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { IconSelect } from "@/components/ui/icon-select"
 import { createClient } from "@/lib/supabase/client"
@@ -114,6 +115,9 @@ export function CategoryForm({ category, onClose, isOpen }: CategoryFormProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{category ? "Edit Category" : "Create Category"}</DialogTitle>
+          <DialogDescription>
+            Fill out the form below to create a new category. Categories help organize notices into meaningful groups.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

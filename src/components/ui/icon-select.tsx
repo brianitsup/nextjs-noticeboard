@@ -11,11 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import * as Icons from "lucide-react"
-import { combineStyles } from "@/lib/style-utils"
+import { LucideIcon } from "lucide-react"
 
 const iconGroups = {
   "Status & Alerts": [
-    "List",
+    "ListOrdered",
     "Bell",
     "Megaphone",
     "AlertCircle",
@@ -28,9 +28,7 @@ const iconGroups = {
   "People & Organizations": [
     "User",
     "Users",
-    "Building",
     "Building2",
-    "Home",
     "Briefcase",
   ],
   "Business & Finance": [
@@ -46,7 +44,7 @@ const iconGroups = {
   ],
   "Events & Activities": [
     "Calendar",
-    "PartyPopper",
+    "Party",
     "Cake",
     "Music",
     "Film",
@@ -59,7 +57,6 @@ const iconGroups = {
     "Hotel",
     "Building",
     "Home",
-    "Store",
   ],
   "Food & Drink": [
     "Coffee",
@@ -70,7 +67,7 @@ const iconGroups = {
     "School",
     "Presentation",
     "BookOpen",
-    "Wrench",
+    "Tool",
   ],
   "Communication": [
     "MessageCircle",
@@ -81,21 +78,20 @@ const iconGroups = {
   "Technology": [
     "Smartphone",
     "Laptop",
-    "Computer",
+    "Monitor",
     "Globe",
     "Cloud",
     "Database",
-    "ServerIcon",
+    "Server",
     "Settings",
     "Wrench",
   ],
   "Security": [
-    "ShieldCheck",
+    "Shield",
     "Lock",
     "Unlock",
     "KeyRound",
-    "LockKeyhole",
-    "Key",
+    "KeySquare",
   ],
 }
 
@@ -105,19 +101,18 @@ interface IconSelectProps {
 }
 
 export function IconSelect({ value, onValueChange }: IconSelectProps) {
-  const selectedIcon = value as keyof typeof Icons
-  const IconComponent = Icons[selectedIcon] as Icons.LucideIcon
+  // Ensure the icon exists, fallback to a default if not
+  const selectedIcon = (value in Icons ? value : "HelpCircle") as keyof typeof Icons
+  const IconComponent = Icons[selectedIcon] as LucideIcon
 
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className="w-full">
         <SelectValue placeholder="Select an icon">
-          {IconComponent && (
-            <div className="flex items-center gap-2">
-              <IconComponent className="h-4 w-4" />
-              <span>{value}</span>
-            </div>
-          )}
+          {IconComponent && React.createElement(IconComponent, {
+            className: "h-4 w-4"
+          })}
+          <span>{value}</span>
         </SelectValue>
       </SelectTrigger>
       <SelectContent className="max-h-[300px]">
@@ -127,17 +122,23 @@ export function IconSelect({ value, onValueChange }: IconSelectProps) {
               {group}
             </SelectLabel>
             {icons.map((iconName) => {
-              const Icon = Icons[iconName as keyof typeof Icons] as Icons.LucideIcon
-              return (
-                <SelectItem
-                  key={iconName}
-                  value={iconName}
-                  className="flex items-center gap-2"
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{iconName}</span>
-                </SelectItem>
-              )
+              // Only render if the icon exists
+              if (iconName in Icons) {
+                const Icon = Icons[iconName as keyof typeof Icons] as LucideIcon
+                return (
+                  <SelectItem
+                    key={`${group}-${iconName}`}
+                    value={iconName}
+                    className="flex items-center gap-2"
+                  >
+                    {React.createElement(Icon, {
+                      className: "h-4 w-4"
+                    })}
+                    <span>{iconName}</span>
+                  </SelectItem>
+                )
+              }
+              return null
             })}
           </SelectGroup>
         ))}
