@@ -169,7 +169,7 @@ export default function UserManagement() {
 
       try {
         if (user) {
-          // Update user
+          // Update existing user
           const { error: updateError } = await supabase
             .from('users')
             .update({
@@ -180,56 +180,59 @@ export default function UserManagement() {
 
           if (updateError) throw updateError;
 
-          // Update password if provided
-          if (formData.password) {
-            const { error: passwordError } = await supabase.auth.updateUser({
-              password: formData.password
-            });
-
-            if (passwordError) throw passwordError;
-          }
-
           toast({
             title: "Success",
-            description: "User updated successfully",
+            description: "User role updated successfully",
           });
         } else {
-          // Create user
-          const { data: authData, error: signUpError } = await supabase.auth.signUp({
-            email: formData.email,
-            password: formData.password,
-            options: {
-              data: {
-                role: formData.role
+          try {
+            // Create new user through API endpoint
+            const response = await fetch('/api/admin/users', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: formData.email,
+                password: formData.password,
+              }),
+            });
+
+            let errorMessage = 'Failed to create user';
+            
+            try {
+              const data = await response.json();
+              
+              if (!response.ok) {
+                errorMessage = data.error || errorMessage;
+                throw new Error(errorMessage);
               }
+
+              if (!data.user) {
+                throw new Error('No user data received');
+              }
+
+              toast({
+                title: "Success",
+                description: data.message || "User created successfully",
+              });
+              
+              onClose();
+              refreshUsers();
+            } catch (parseError) {
+              throw new Error(errorMessage);
             }
-          });
-
-          if (signUpError) throw signUpError;
-
-          if (!authData.user) {
-            throw new Error("Failed to create user");
+          } catch (error: any) {
+            console.error("Error creating user:", error);
+            toast({
+              title: "Error",
+              description: error.message,
+              variant: "destructive",
+            });
+          } finally {
+            setIsLoading(false);
           }
-
-          // Set the role in the users table
-          const { error: roleError } = await supabase
-            .from('users')
-            .insert([{
-              id: authData.user.id,
-              email: formData.email,
-              role: formData.role
-            }]);
-
-          if (roleError) throw roleError;
-
-          toast({
-            title: "Success",
-            description: "User created successfully",
-          });
         }
-
-        onClose();
-        refreshUsers();
       } catch (error: any) {
         console.error("Error saving user:", error);
         toast({
@@ -237,8 +240,6 @@ export default function UserManagement() {
           description: error.message || "Failed to save user",
           variant: "destructive",
         });
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -255,41 +256,45 @@ export default function UserManagement() {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Password {user && "(leave blank to keep unchanged)"}</Label>
-          <Input
-            id="password"
-            type="password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            required={!user}
-            minLength={6}
-          />
-        </div>
+        {!user && (
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              required
+              minLength={6}
+            />
+          </div>
+        )}
 
-        <div className="space-y-2">
-          <Label htmlFor="role">Role</Label>
-          <Select
-            value={formData.role}
-            onValueChange={(value: UserRole) => setFormData({ ...formData, role: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">Administrator</SelectItem>
-              <SelectItem value="editor">Editor</SelectItem>
-              <SelectItem value="moderator">Moderator</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {user && (
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select
+              value={formData.role}
+              onValueChange={(value: UserRole) => setFormData({ ...formData, role: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Administrator</SelectItem>
+                <SelectItem value="editor">Editor</SelectItem>
+                <SelectItem value="moderator">Moderator</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Saving..." : user ? "Update" : "Create"}
+            {isLoading ? "Saving..." : user ? "Update Role" : "Create User"}
           </Button>
         </div>
       </form>
