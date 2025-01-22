@@ -29,55 +29,98 @@ export default function UserManagement() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const supabase = createClient();
 
   useEffect(() => {
-    fetchUsers();
-    getCurrentUserRole();
+    checkAuthAndFetchData();
   }, []);
 
-  async function getCurrentUserRole() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const { data, error } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-
-      if (!error && data) {
-        setCurrentUserRole(data.role as UserRole);
+  async function checkAuthAndFetchData() {
+    try {
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      
+      if (authError) throw authError;
+      
+      if (!session) {
+        toast({
+          title: "Authentication Error",
+          description: "Please sign in to access this area.",
+          variant: "destructive",
+        });
+        return;
       }
-    }
-  }
 
-  async function fetchUsers() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+      // Get role from session metadata
+      const role = session.user.role || session.user.app_metadata?.role;
+      
+      if (!role) {
+        console.error("No role found in session:", session);
+        toast({
+          title: "Error",
+          description: "Unable to determine user role",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    const { data: users, error } = await supabase
-      .from('users')
-      .select(`
-        id,
-        email,
-        role,
-        created_at
-      `)
-      .order('created_at', { ascending: false });
+      if (!['admin', 'moderator'].includes(role)) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to view users.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (error) {
-      console.error("Error fetching users:", error);
+      setCurrentUserRole(role as UserRole);
+
+      // Fetch users after role is confirmed
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, email, role, created_at')
+        .order('created_at', { ascending: false });
+
+      if (usersError) {
+        console.error("Error fetching users:", {
+          error: usersError,
+          session: session,
+          role: role
+        });
+        toast({
+          title: "Error",
+          description: "Failed to fetch users. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Successfully fetched users:", {
+        count: users?.length || 0,
+        role: role
+      });
+
+      setUsers(users || []);
+    } catch (error) {
+      console.error("Error in checkAuthAndFetchData:", {
+        error,
+        stack: error instanceof Error ? error.stack : undefined
+      });
       toast({
         title: "Error",
-        description: "Failed to fetch users",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    setUsers(users || []);
   }
+
+  const refreshUsers = () => {
+    setIsLoading(true);
+    checkAuthAndFetchData();
+  };
 
   async function handleDeleteUser(id: string) {
     if (currentUserRole !== 'admin') {
@@ -89,23 +132,27 @@ export default function UserManagement() {
       return;
     }
 
-    const { error } = await supabase.auth.admin.deleteUser(id);
+    try {
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', id);
 
-    if (error) {
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+      refreshUsers();
+    } catch (error) {
       console.error("Error deleting user:", error);
       toast({
         title: "Error",
-        description: "Failed to delete user",
+        description: "An unexpected error occurred while deleting user",
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Success",
-      description: "User deleted successfully",
-    });
-    fetchUsers();
   }
 
   function UserForm({ user, onClose }: { user?: User; onClose: () => void }) {
@@ -123,20 +170,24 @@ export default function UserManagement() {
       try {
         if (user) {
           // Update user
-          const { error } = await supabase.auth.admin.updateUserById(user.id, {
-            email: formData.email,
-            ...(formData.password ? { password: formData.password } : {}),
-          });
-
-          if (error) throw error;
-
-          // Update role
-          const { error: roleError } = await supabase
+          const { error: updateError } = await supabase
             .from('users')
-            .update({ role: formData.role })
+            .update({
+              email: formData.email,
+              role: formData.role
+            })
             .eq('id', user.id);
 
-          if (roleError) throw roleError;
+          if (updateError) throw updateError;
+
+          // Update password if provided
+          if (formData.password) {
+            const { error: passwordError } = await supabase.auth.updateUser({
+              password: formData.password
+            });
+
+            if (passwordError) throw passwordError;
+          }
 
           toast({
             title: "Success",
@@ -144,13 +195,32 @@ export default function UserManagement() {
           });
         } else {
           // Create user
-          const { error } = await supabase.auth.admin.createUser({
+          const { data: authData, error: signUpError } = await supabase.auth.signUp({
             email: formData.email,
             password: formData.password,
-            email_confirm: true,
+            options: {
+              data: {
+                role: formData.role
+              }
+            }
           });
 
-          if (error) throw error;
+          if (signUpError) throw signUpError;
+
+          if (!authData.user) {
+            throw new Error("Failed to create user");
+          }
+
+          // Set the role in the users table
+          const { error: roleError } = await supabase
+            .from('users')
+            .insert([{
+              id: authData.user.id,
+              email: formData.email,
+              role: formData.role
+            }]);
+
+          if (roleError) throw roleError;
 
           toast({
             title: "Success",
@@ -159,7 +229,7 @@ export default function UserManagement() {
         }
 
         onClose();
-        fetchUsers();
+        refreshUsers();
       } catch (error: any) {
         console.error("Error saving user:", error);
         toast({
@@ -193,6 +263,7 @@ export default function UserManagement() {
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             required={!user}
+            minLength={6}
           />
         </div>
 
@@ -214,7 +285,7 @@ export default function UserManagement() {
         </div>
 
         <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
@@ -250,6 +321,26 @@ export default function UserManagement() {
     setSelectedUser(user);
     setIsCreateModalOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUserRole || !['admin', 'moderator'].includes(currentUserRole)) {
+    return (
+      <div className="p-8">
+        <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+          <div className="text-lg text-destructive">Access Denied</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">

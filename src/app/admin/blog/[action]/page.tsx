@@ -117,7 +117,14 @@ export default function BlogPostEditor({ params }: { params: { action: string } 
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "You must be signed in to create or edit blog posts",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const slug = slugify(formData.title, { lower: true, strict: true });
       const excerpt = formData.content
@@ -132,7 +139,7 @@ export default function BlogPostEditor({ params }: { params: { action: string } 
         meta_description: formData.meta_description,
         featured_image: formData.featured_image,
         tags: formData.tags,
-        published: shouldPublish, // Set published based on which button was clicked
+        published: shouldPublish,
         slug,
         excerpt,
         author_id: session.user.id,
@@ -141,6 +148,21 @@ export default function BlogPostEditor({ params }: { params: { action: string } 
 
       let error;
       if (isEdit) {
+        const { data: existingPost } = await supabase
+          .from("blog_posts")
+          .select("author_id")
+          .eq("id", params.action)
+          .single();
+
+        if (!existingPost || existingPost.author_id !== session.user.id) {
+          toast({
+            title: "Error",
+            description: "You can only edit your own blog posts",
+            variant: "destructive",
+          });
+          return;
+        }
+
         ({ error } = await supabase
           .from("blog_posts")
           .update(postData)

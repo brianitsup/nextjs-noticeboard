@@ -69,77 +69,145 @@ export default function BlogManagement() {
   }
 
   async function fetchPosts() {
-    const supabase = createClient();
-    const { data: postsData, error: postsError } = await supabase
-      .from("blog_posts")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const { data: postsData, error: postsError } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (postsError) {
-      console.error("Error fetching posts:", postsError);
-      return;
+      if (postsError) {
+        console.error("Error fetching posts:", {
+          error: postsError,
+          role: userRole
+        });
+        toast({
+          title: "Error",
+          description: "Failed to fetch blog posts. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!postsData || postsData.length === 0) {
+        console.log("No posts found", { role: userRole });
+      } else {
+        console.log(`Found ${postsData.length} posts`);
+      }
+
+      setPosts(postsData || []);
+    } catch (error) {
+      console.error("Unexpected error fetching posts:", {
+        error,
+        role: userRole
+      });
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while fetching blog posts.",
+        variant: "destructive",
+      });
     }
-
-    setPosts(postsData);
   }
 
   async function handleDeletePost(id: string) {
-    // Only admins and editors can delete posts
-    if (!['admin', 'editor'].includes(userRole ?? '')) {
+    try {
+      // Admin and editors can delete any post, owners can delete their own
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const isStaff = ['admin', 'editor'].includes(userRole ?? '');
+      
+      if (!isStaff) {
+        // If not staff, check if user is the post owner
+        const { data: post } = await supabase
+          .from("blog_posts")
+          .select("author_id")
+          .eq("id", id)
+          .single();
+
+        if (!post || post.author_id !== session.user.id) {
+          toast({
+            title: "Error",
+            description: "You can only delete your own blog posts",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      const { error } = await supabase
+        .from("blog_posts")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error("Error deleting post:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete blog post",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
-        title: "Error",
-        description: "You don't have permission to delete blog posts",
-        variant: "destructive",
+        title: "Success",
+        description: "Blog post deleted successfully",
       });
-      return;
-    }
-
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("blog_posts")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
+      fetchPosts();
+    } catch (error) {
       console.error("Error deleting post:", error);
       toast({
         title: "Error",
-        description: "Failed to delete blog post",
+        description: "An unexpected error occurred while deleting the blog post",
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Success",
-      description: "Blog post deleted successfully",
-    });
-    fetchPosts();
   }
 
   async function handleTogglePublish(post: BlogPost) {
-    // All roles can toggle publish status
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("blog_posts")
-      .update({ published: !post.published })
-      .eq("id", post.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-    if (error) {
-      console.error("Error toggling post publish state:", error);
+      const isStaff = ['admin', 'editor'].includes(userRole ?? '');
+      
+      if (!isStaff && post.author_id !== session.user.id) {
+        toast({
+          title: "Error",
+          description: "You can only update your own blog posts",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({ published: !post.published })
+        .eq("id", post.id);
+
+      if (error) {
+        console.error("Error toggling post publish state:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update blog post",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: `Blog post ${post.published ? "unpublished" : "published"} successfully`,
+      });
+      fetchPosts();
+    } catch (error) {
+      console.error("Error updating post:", error);
       toast({
         title: "Error",
-        description: "Failed to update blog post",
+        description: "An unexpected error occurred while updating the blog post",
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Success",
-      description: `Blog post ${post.published ? "unpublished" : "published"} successfully`,
-    });
-    fetchPosts();
   }
 
   const handleCreatePost = () => {
