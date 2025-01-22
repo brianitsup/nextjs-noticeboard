@@ -37,8 +37,22 @@ export default function AdminDashboard() {
         return;
       }
 
-      const isAdmin = session.user.role === 'admin' || session.user.app_metadata?.role === 'admin';
-      if (!isAdmin) {
+      // Check role from database
+      const { data: userData, error: roleError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (roleError) {
+        console.error('Error fetching user role:', roleError);
+        router.push('/auth/admin-signin');
+        return;
+      }
+
+      const hasAccess = ['admin', 'editor', 'moderator'].includes(userData?.role || '');
+      
+      if (!hasAccess) {
         await supabase.auth.signOut();
         router.push('/auth/admin-signin');
       }

@@ -26,7 +26,7 @@ export default function CategoriesManagement() {
   }, []);
 
   useEffect(() => {
-    if (userRole && ['admin', 'editor'].includes(userRole)) {
+    if (userRole) {
       fetchData();
     }
   }, [userRole]);
@@ -44,11 +44,22 @@ export default function CategoriesManagement() {
         return;
       }
 
-      // Check if user has admin role from session metadata
-      const isAdmin = session.user.role === 'admin' || session.user.app_metadata?.role === 'admin';
-      const role = isAdmin ? 'admin' : 'user';
+      // Check user role from database
+      const { data: userData, error: roleError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
 
-      if (!isAdmin) {
+      if (roleError) {
+        console.error('Error fetching user role:', roleError);
+        throw roleError;
+      }
+
+      const role = userData?.role || 'user';
+      const hasAccess = ['admin', 'editor', 'moderator'].includes(role);
+
+      if (!hasAccess) {
         toast({
           title: "Access Denied",
           description: "You don't have permission to access this area.",
@@ -92,15 +103,6 @@ export default function CategoriesManagement() {
   }
 
   async function handleDeleteCategory(id: string) {
-    if (userRole !== 'admin') {
-      toast({
-        title: "Error",
-        description: "Only administrators can delete categories",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
@@ -123,27 +125,11 @@ export default function CategoriesManagement() {
   }
 
   const handleCreateCategory = () => {
-    if (!['admin', 'editor'].includes(userRole ?? '')) {
-      toast({
-        title: "Error",
-        description: "Only administrators and editors can create categories",
-        variant: "destructive",
-      });
-      return;
-    }
     setSelectedCategory(null);
     setIsCategoryModalOpen(true);
   };
 
   const handleEditCategory = (category: Category) => {
-    if (!['admin', 'editor'].includes(userRole ?? '')) {
-      toast({
-        title: "Error",
-        description: "Only administrators and editors can edit categories",
-        variant: "destructive",
-      });
-      return;
-    }
     setSelectedCategory(category);
     setIsCategoryModalOpen(true);
   };

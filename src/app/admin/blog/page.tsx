@@ -45,7 +45,7 @@ export default function BlogManagement() {
       // Get user role from metadata
       const role = session.user.role || session.user.app_metadata?.role || 'user';
 
-      if (!['admin', 'editor', 'moderator'].includes(role)) {
+      if (!['admin', 'editor'].includes(role)) {
         toast({
           title: "Access Denied",
           description: "You don't have permission to access this area.",

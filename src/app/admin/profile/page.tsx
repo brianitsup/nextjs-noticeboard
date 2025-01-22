@@ -38,9 +38,21 @@ export default function UserProfile() {
         return;
       }
 
-      const isAdmin = session.user.role === 'admin' || session.user.app_metadata?.role === 'admin';
+      // Get role from database
+      const { data: userData, error: roleError } = await supabase
+        .from('users')
+        .select('id, email, role, created_at')
+        .eq('id', session.user.id)
+        .single();
 
-      if (!isAdmin) {
+      if (roleError) {
+        console.error('Error fetching user role:', roleError);
+        throw roleError;
+      }
+
+      const hasAccess = ['admin', 'editor', 'moderator'].includes(userData?.role || '');
+
+      if (!hasAccess) {
         toast({
           title: "Access Denied",
           description: "You don't have permission to access this area.",
@@ -50,60 +62,12 @@ export default function UserProfile() {
         return;
       }
 
-      try {
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('id, email, role, created_at')
-          .eq('id', session.user.id)
-          .single();
-
-        if (userError) {
-          if (userError.code === 'PGRST116') {
-            const { data: newUser, error: createError } = await supabase
-              .from('users')
-              .upsert([{
-                id: session.user.id,
-                email: session.user.email,
-                role: 'admin',
-                created_at: session.user.created_at
-              }])
-              .select('id, email, role, created_at')
-              .single();
-
-            if (createError) throw createError;
-            setUser({ ...session.user, ...newUser });
-          } else {
-            throw userError;
-          }
-        } else {
-          setUser({ ...session.user, ...userData });
-        }
-
-        setFormData({
-          email: session.user.email || "",
-          newPassword: "",
-          confirmPassword: "",
-        });
-      } catch (dbError) {
-        console.error('Error fetching user data:', dbError);
-        setUser({
-          ...session.user,
-          role: 'admin',
-          created_at: session.user.created_at || new Date().toISOString(),
-        });
-
-        setFormData({
-          email: session.user.email || "",
-          newPassword: "",
-          confirmPassword: "",
-        });
-
-        toast({
-          title: "Warning",
-          description: "Some user data could not be loaded, but basic functionality is available.",
-          variant: "default",
-        });
-      }
+      setUser({ ...session.user, ...userData });
+      setFormData({
+        email: session.user.email || "",
+        newPassword: "",
+        confirmPassword: "",
+      });
 
       setIsLoading(false);
     } catch (error) {

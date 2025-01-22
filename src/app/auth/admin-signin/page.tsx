@@ -18,6 +18,7 @@ export default function AdminSignIn() {
   const [password, setPassword] = React.useState("");
   const supabase = createClient();
   const { toast } = useToast();
+  const router = useRouter();
 
   // Function to get client IP (for rate limiting)
   const getClientIdentifier = async () => {
@@ -30,6 +31,41 @@ export default function AdminSignIn() {
       return crypto.randomUUID();
     }
   };
+
+  // Check for existing session on mount
+  React.useEffect(() => {
+    const checkExistingSession = async () => {
+      try {
+        console.log("🔍 Checking for existing session...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!session || error) {
+          console.log("ℹ️ No existing session");
+          return;
+        }
+
+        // Check if user has appropriate role
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!userError && userData?.role && ['admin', 'editor', 'moderator'].includes(userData.role)) {
+          console.log("✅ Valid admin session found");
+          router.replace('/admin/dashboard');
+        }
+      } catch (error) {
+        console.error("❌ Session check error:", error);
+      }
+    };
+
+    const pathname = window.location.pathname;
+    // Only check session if we're on the admin-signin page
+    if (pathname === '/auth/admin-signin') {
+      checkExistingSession();
+    }
+  }, [router, supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,24 +99,32 @@ export default function AdminSignIn() {
         throw signInError || new Error('Sign in failed');
       }
 
-      console.log("✅ Sign in successful, checking admin role...");
-      console.log("👤 User data:", {
-        id: data.user.id,
-        role: data.user.role,
-        appMetadataRole: data.user.app_metadata?.role
-      });
+      console.log("✅ Sign in successful, checking role...");
 
-      // Check if user has admin role in their metadata
-      const isAdmin = data.user.role === 'admin' || data.user.app_metadata?.role === 'admin';
+      // Check if user has appropriate role in their metadata
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
 
-      if (!isAdmin) {
-        console.log("❌ User is not an admin");
-        // Sign out if not admin
+      if (userError) {
+        console.error("❌ Error fetching user role:", userError);
+        throw new Error("Failed to verify user role");
+      }
+
+      console.log("🔑 Database role:", userData?.role);
+      
+      const hasAccess = ['admin', 'editor', 'moderator'].includes(userData?.role || '');
+
+      if (!hasAccess) {
+        console.log("❌ User does not have appropriate role");
+        // Sign out if not authorized
         await supabase.auth.signOut();
         throw new Error("You don't have permission to access the admin area");
       }
 
-      console.log("✅ Admin role confirmed");
+      console.log("✅ Role confirmed:", userData.role);
 
       // Reset rate limit on successful login
       adminLoginRateLimit.reset(clientId);
@@ -94,28 +138,10 @@ export default function AdminSignIn() {
       });
 
       console.log("✅ Activity logged");
-      console.log("🔄 Setting session...");
-
-      // Set the session explicitly
-      await supabase.auth.setSession({
-        access_token: data.session!.access_token,
-        refresh_token: data.session!.refresh_token,
-      });
-
-      console.log("✅ Session set");
-
-      // Verify the session was set correctly
-      const { data: { session: verifySession }, error: verifyError } = await supabase.auth.getSession();
-      if (verifyError || !verifySession) {
-        console.error("❌ Failed to verify session:", verifyError);
-        throw new Error("Failed to establish session");
-      }
-
-      console.log("✅ Session verified");
       console.log("🚀 Redirecting to dashboard...");
 
-      // Redirect to admin dashboard
-      window.location.href = '/admin/dashboard';
+      // Use router.replace for a cleaner navigation
+      router.replace('/admin/dashboard');
       
     } catch (error: any) {
       console.error("❌ Sign in error:", error);
@@ -129,19 +155,6 @@ export default function AdminSignIn() {
       setIsLoading(false);
     }
   };
-
-  // Check for existing session on mount
-  React.useEffect(() => {
-    const checkExistingSession = async () => {
-      console.log("🔍 Checking for existing session...");
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (session) {
-        console.log("⚠️ Found existing session, clearing it...");
-        await supabase.auth.signOut();
-      }
-    };
-    checkExistingSession();
-  }, [supabase.auth]);
 
   return (
     <div className="container flex h-screen w-screen flex-col items-center justify-center">

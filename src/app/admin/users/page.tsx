@@ -52,11 +52,15 @@ export default function UserManagement() {
         return;
       }
 
-      // Get role from session metadata
-      const role = session.user.role || session.user.app_metadata?.role;
-      
-      if (!role) {
-        console.error("No role found in session:", session);
+      // Get role from database
+      const { data: userData, error: roleError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (roleError) {
+        console.error("Error fetching user role:", roleError);
         toast({
           title: "Error",
           description: "Unable to determine user role",
@@ -65,7 +69,10 @@ export default function UserManagement() {
         return;
       }
 
-      if (!['admin', 'moderator'].includes(role)) {
+      const role = userData?.role || 'user';
+      const hasAccess = ['admin', 'editor', 'moderator'].includes(role);
+
+      if (!hasAccess) {
         toast({
           title: "Access Denied",
           description: "You don't have permission to view users.",
@@ -96,11 +103,6 @@ export default function UserManagement() {
         return;
       }
 
-      console.log("Successfully fetched users:", {
-        count: users?.length || 0,
-        role: role
-      });
-
       setUsers(users || []);
     } catch (error) {
       console.error("Error in checkAuthAndFetchData:", {
@@ -123,15 +125,6 @@ export default function UserManagement() {
   };
 
   async function handleDeleteUser(id: string) {
-    if (currentUserRole !== 'admin') {
-      toast({
-        title: "Error",
-        description: "Only administrators can delete users",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const { error } = await supabase
         .from('users')
@@ -302,27 +295,11 @@ export default function UserManagement() {
   }
 
   const handleCreateUser = () => {
-    if (currentUserRole !== 'admin') {
-      toast({
-        title: "Error",
-        description: "Only administrators can create users",
-        variant: "destructive",
-      });
-      return;
-    }
     setSelectedUser(null);
     setIsCreateModalOpen(true);
   };
 
   const handleEditUser = (user: User) => {
-    if (currentUserRole !== 'admin') {
-      toast({
-        title: "Error",
-        description: "Only administrators can edit users",
-        variant: "destructive",
-      });
-      return;
-    }
     setSelectedUser(user);
     setIsCreateModalOpen(true);
   };
@@ -337,7 +314,7 @@ export default function UserManagement() {
     );
   }
 
-  if (!currentUserRole || !['admin', 'moderator'].includes(currentUserRole)) {
+  if (!currentUserRole || !['admin', 'editor', 'moderator'].includes(currentUserRole)) {
     return (
       <div className="p-8">
         <div className="flex h-[calc(100vh-4rem)] items-center justify-center">

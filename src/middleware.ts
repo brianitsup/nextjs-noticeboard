@@ -15,18 +15,11 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient({ req, res })
 
   // Check if this is an admin route
-  if (req.nextUrl.pathname.startsWith('/admin')) {
-    console.log('👮 Admin route detected');
+  if (req.nextUrl.pathname.startsWith('/admin') || req.nextUrl.pathname === '/auth/admin-signin') {
+    console.log('👮 Protected route detected');
     
     try {
-      // Skip auth check for admin sign-in page
-      if (req.nextUrl.pathname === '/auth/admin-signin') {
-        console.log('🔓 Skipping auth check for admin sign-in page');
-        return res;
-      }
-
       console.log('🔒 Checking session...');
-      // Refresh and validate the session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
       if (sessionError) {
@@ -34,7 +27,27 @@ export async function middleware(req: NextRequest) {
         throw sessionError
       }
 
-      // If no session, redirect to sign-in
+      // Special handling for admin sign-in page
+      if (req.nextUrl.pathname === '/auth/admin-signin') {
+        if (!session) {
+          console.log('✅ No session on sign-in page, allowing access');
+          return res;
+        }
+
+        // If there's a session, verify the role
+        const { data: userData, error: roleError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!roleError && userData?.role && ['admin', 'editor', 'moderator'].includes(userData.role)) {
+          console.log('✅ Valid session found on sign-in page, redirecting to dashboard');
+          return NextResponse.redirect(new URL('/admin/dashboard', req.url));
+        }
+      }
+
+      // For all other admin routes, require a session
       if (!session) {
         console.log('⚠️ No session found, redirecting to sign-in');
         const redirectUrl = new URL('/auth/admin-signin', req.url)
@@ -62,22 +75,53 @@ export async function middleware(req: NextRequest) {
       }
 
       console.log('✅ Session valid, checking admin role...');
-      // Check if user has admin role from session metadata
-      const isAdmin = session.user.role === 'admin' || session.user.app_metadata?.role === 'admin'
-      console.log('👤 User roles:', {
-        role: session.user.role,
-        appMetadataRole: session.user.app_metadata?.role
-      });
+      // Check if user has admin role from database
+      const { data: userData, error: roleError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
 
-      if (!isAdmin) {
-        console.log('⚠️ Not an admin user, redirecting to sign-in');
-        await supabase.auth.signOut()
-        const redirectUrl = new URL('/auth/admin-signin', req.url)
-        redirectUrl.searchParams.set('returnTo', req.nextUrl.pathname)
-        return NextResponse.redirect(redirectUrl)
+      if (roleError) {
+        console.error('❌ Role check error:', roleError);
+        throw roleError;
       }
 
-      console.log('✅ Admin role confirmed');
+      const role = userData?.role || '';
+      console.log('👤 User role:', role);
+
+      // Define route access permissions
+      const routePermissions: Record<string, string[]> = {
+        '/admin/dashboard': ['admin', 'editor', 'moderator'],
+        '/admin/notices': ['admin', 'editor', 'moderator'],
+        '/admin/blog': ['admin', 'editor', 'moderator'],
+        '/admin/categories': ['admin', 'editor'],
+        '/admin/users': ['admin', 'moderator'],
+        '/admin/profile': ['admin', 'editor', 'moderator'],
+        '/admin/settings': ['admin']
+      };
+
+      // Get the base route (e.g., /admin/blog from /admin/blog/123)
+      const baseRoute = '/' + req.nextUrl.pathname.split('/').slice(1, 3).join('/');
+      const allowedRoles = routePermissions[baseRoute] || ['admin'];
+
+      const hasAccess = allowedRoles.includes(role);
+      console.log('🔒 Access check:', { baseRoute, allowedRoles, hasAccess });
+
+      if (!hasAccess) {
+        console.log('⚠️ Not authorized for this route, redirecting to dashboard');
+        // If user has any admin access but not for this route, redirect to dashboard
+        if (['admin', 'editor', 'moderator'].includes(role)) {
+          return NextResponse.redirect(new URL('/admin/dashboard', req.url));
+        }
+        // Otherwise, sign out and redirect to sign-in
+        await supabase.auth.signOut();
+        const redirectUrl = new URL('/auth/admin-signin', req.url);
+        redirectUrl.searchParams.set('returnTo', req.nextUrl.pathname);
+        return NextResponse.redirect(redirectUrl);
+      }
+
+      console.log('✅ Role access confirmed for route');
 
       // Set session cookie
       const { data: { session: refreshedSession } } = await supabase.auth.getSession()
