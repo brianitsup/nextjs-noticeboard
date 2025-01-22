@@ -18,7 +18,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
       <div className="flex-1">
         {children}
       </div>
-      <FooterWrapper />
+      {!isAdminRoute && <FooterWrapper />}
     </>
   );
 } 

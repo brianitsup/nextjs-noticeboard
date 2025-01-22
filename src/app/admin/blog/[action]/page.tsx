@@ -172,15 +172,17 @@ export default function BlogPostEditor({ params }: { params: { action: string } 
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="p-8">
+        <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+          <div className="text-lg">Loading...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">
           {isEdit ? "Edit Blog Post" : "Create New Blog Post"}
         </h1>
@@ -249,6 +251,16 @@ export default function BlogPostEditor({ params }: { params: { action: string } 
             onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
             placeholder="Comma-separated tags (optional)"
           />
+        </div>
+
+        <div className="flex justify-end space-x-4">
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save Draft"}
+          </Button>
         </div>
       </form>
     </div>
