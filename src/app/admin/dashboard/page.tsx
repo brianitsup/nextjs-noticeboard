@@ -1,15 +1,68 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { 
   BarChart3, 
   Users, 
   FileText, 
   Activity,
-  Clock
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import { activityLogger } from '@/lib/activity-logger';
+
+interface ActivityLog {
+  id: string;
+  action: string;
+  details: string;
+  created_at: string;
+  ip_address: string;
+}
 
 export default function AdminDashboard() {
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const supabase = createClient();
+  const router = useRouter();
+
+  // Verify session on mount and periodically
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session) {
+        router.push('/auth/admin-signin');
+        return;
+      }
+
+      const isAdmin = session.user.role === 'admin' || session.user.app_metadata?.role === 'admin';
+      if (!isAdmin) {
+        await supabase.auth.signOut();
+        router.push('/auth/admin-signin');
+      }
+    };
+
+    // Check immediately
+    checkSession();
+
+    // Check every 5 minutes
+    const interval = setInterval(checkSession, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [router, supabase.auth]);
+
+  // Load activity logs
+  useEffect(() => {
+    const loadLogs = async () => {
+      const logs = await activityLogger.getRecentLogs(10);
+      setActivityLogs(logs);
+    };
+
+    loadLogs();
+  }, []);
+
   // Mock stats data
   const stats = [
     {
@@ -29,34 +82,6 @@ export default function AdminDashboard() {
       value: '24.8%',
       change: '+2.1%',
       icon: BarChart3
-    }
-  ];
-
-  // Mock activity logs
-  const activityLogs = [
-    {
-      action: 'Post Created',
-      title: 'New Announcement: Summer Schedule',
-      timestamp: '2 minutes ago',
-      user: 'Admin User'
-    },
-    {
-      action: 'Post Updated',
-      title: 'Community Guidelines',
-      timestamp: '1 hour ago',
-      user: 'Admin User'
-    },
-    {
-      action: 'Post Deleted',
-      title: 'Outdated Notice',
-      timestamp: '3 hours ago',
-      user: 'Admin User'
-    },
-    {
-      action: 'Post Created',
-      title: 'Welcome Message',
-      timestamp: '1 day ago',
-      user: 'Admin User'
     }
   ];
 
@@ -85,21 +110,28 @@ export default function AdminDashboard() {
         <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
         <Card>
           <div className="divide-y divide-border">
-            {activityLogs.map((log, index) => (
-              <div key={index} className="p-4 flex items-start space-x-4">
-                <Activity className="h-5 w-5 text-muted-foreground mt-1" />
-                <div className="flex-1">
-                  <p className="font-medium">{log.action}</p>
-                  <p className="text-sm text-muted-foreground">{log.title}</p>
-                  <div className="flex items-center space-x-2 mt-1 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>{log.timestamp}</span>
-                    <span>•</span>
-                    <span>{log.user}</span>
+            {activityLogs.length > 0 ? (
+              activityLogs.map((log) => (
+                <div key={log.id} className="p-4 flex items-start space-x-4">
+                  <Activity className="h-5 w-5 text-muted-foreground mt-1" />
+                  <div className="flex-1">
+                    <p className="font-medium">{log.action}</p>
+                    <p className="text-sm text-muted-foreground">{log.details}</p>
+                    <div className="flex items-center space-x-2 mt-1 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>{new Date(log.created_at).toLocaleString()}</span>
+                      <span>•</span>
+                      <span>IP: {log.ip_address}</span>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="p-4 flex items-center justify-center text-muted-foreground">
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                No recent activity
               </div>
-            ))}
+            )}
           </div>
         </Card>
       </div>

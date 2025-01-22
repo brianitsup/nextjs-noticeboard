@@ -159,3 +159,73 @@
 .dark .react-datepicker__day--keyboard-selected {
   @apply bg-muted/70 text-foreground;
 }
+
+/* TipTap Editor Styles */
+.ProseMirror {
+  @apply min-h-[200px] text-foreground bg-background p-4 focus:outline-none;
+}
+
+.ProseMirror p {
+  @apply my-4;
+}
+
+.ProseMirror h1 {
+  @apply text-3xl font-bold my-6;
+}
+
+.ProseMirror h2 {
+  @apply text-2xl font-bold my-5;
+}
+
+.ProseMirror h3 {
+  @apply text-xl font-bold my-4;
+}
+
+.ProseMirror ul {
+  @apply list-disc pl-6 my-4;
+}
+
+.ProseMirror ol {
+  @apply list-decimal pl-6 my-4;
+}
+
+.ProseMirror blockquote {
+  @apply border-l-4 border-muted pl-4 my-4 italic;
+}
+
+.ProseMirror code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.ProseMirror pre {
+  @apply bg-muted p-4 rounded-lg my-4 font-mono text-sm overflow-x-auto;
+}
+
+.ProseMirror a {
+  @apply text-primary underline hover:text-primary/80;
+}
+
+.ProseMirror img {
+  @apply max-w-full h-auto rounded-lg my-4;
+}
+
+/* Dark mode specific styles */
+.dark .ProseMirror {
+  @apply text-foreground bg-background;
+}
+
+.dark .ProseMirror blockquote {
+  @apply border-muted;
+}
+
+.dark .ProseMirror code {
+  @apply bg-muted text-foreground;
+}
+
+.dark .ProseMirror pre {
+  @apply bg-muted text-foreground;
+}
+
+.dark .ProseMirror a {
+  @apply text-primary hover:text-primary/80;
+}

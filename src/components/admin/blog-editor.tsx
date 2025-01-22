@@ -36,7 +36,7 @@ const createEditorConfig = (content: string, onChange: (html: string) => void) =
   content,
   editorProps: {
     attributes: {
-      class: 'prose max-w-none focus:outline-none'
+      class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none'
     }
   },
   onUpdate: ({ editor }: { editor: Editor }) => {
@@ -78,12 +78,12 @@ function EditorComponent({ content, onChange }: BlogEditorProps) {
 
   return (
     <div className="border rounded-lg" onClick={e => e.stopPropagation()}>
-      <div className="border-b p-2 flex gap-2 bg-gray-50" onClick={e => e.stopPropagation()}>
+      <div className="border-b p-2 flex gap-2 bg-muted/50" onClick={e => e.stopPropagation()}>
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className={`tiptap-toolbar-button ${editor.isActive("bold") ? "bg-gray-200" : ""}`}
+          className={`tiptap-toolbar-button ${editor.isActive("bold") ? "bg-muted" : ""}`}
           onClick={(e) => handleToolbarClick(e, () => editor.chain().focus().toggleBold().run())}
         >
           <Bold className="h-4 w-4" />
@@ -92,7 +92,7 @@ function EditorComponent({ content, onChange }: BlogEditorProps) {
           type="button"
           variant="ghost"
           size="sm"
-          className={`tiptap-toolbar-button ${editor.isActive("italic") ? "bg-gray-200" : ""}`}
+          className={`tiptap-toolbar-button ${editor.isActive("italic") ? "bg-muted" : ""}`}
           onClick={(e) => handleToolbarClick(e, () => editor.chain().focus().toggleItalic().run())}
         >
           <Italic className="h-4 w-4" />
@@ -101,7 +101,7 @@ function EditorComponent({ content, onChange }: BlogEditorProps) {
           type="button"
           variant="ghost"
           size="sm"
-          className={`tiptap-toolbar-button ${editor.isActive("link") ? "bg-gray-200" : ""}`}
+          className={`tiptap-toolbar-button ${editor.isActive("link") ? "bg-muted" : ""}`}
           onClick={(e) => handleToolbarClick(e, () => {
             e.preventDefault();
             const url = window.prompt("Enter the URL");
@@ -131,7 +131,7 @@ function EditorComponent({ content, onChange }: BlogEditorProps) {
           type="button"
           variant="ghost"
           size="sm"
-          className={`tiptap-toolbar-button ${editor.isActive("bulletList") ? "bg-gray-200" : ""}`}
+          className={`tiptap-toolbar-button ${editor.isActive("bulletList") ? "bg-muted" : ""}`}
           onClick={(e) => handleToolbarClick(e, () => editor.chain().focus().toggleBulletList().run())}
         >
           <List className="h-4 w-4" />
@@ -140,7 +140,7 @@ function EditorComponent({ content, onChange }: BlogEditorProps) {
           type="button"
           variant="ghost"
           size="sm"
-          className={`tiptap-toolbar-button ${editor.isActive("orderedList") ? "bg-gray-200" : ""}`}
+          className={`tiptap-toolbar-button ${editor.isActive("orderedList") ? "bg-muted" : ""}`}
           onClick={(e) => handleToolbarClick(e, () => editor.chain().focus().toggleOrderedList().run())}
         >
           <ListOrdered className="h-4 w-4" />
@@ -149,7 +149,7 @@ function EditorComponent({ content, onChange }: BlogEditorProps) {
       <div className="relative">
         <EditorContent 
           editor={editor} 
-          className="prose max-w-none p-4 min-h-[200px] focus:outline-none"
+          className="prose max-w-none"
         />
       </div>
     </div>

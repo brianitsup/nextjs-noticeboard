@@ -58,6 +58,40 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
     try {
       const supabase = createClient();
 
+      // Debug: Check authentication status
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      console.log('Auth Debug:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        role: session?.user?.role,
+        authError
+      });
+
+      // Debug: Test direct blog_posts table access without health check
+      console.log('Attempting to access blog_posts table...');
+      const { data: testData, error: testError } = await supabase
+        .from('blog_posts')
+        .select('count')
+        .limit(1);
+      
+      console.log('Blog Posts Table Access Debug:', {
+        error: testError,
+        data: testData,
+        requestDetails: {
+          table: 'blog_posts',
+          operation: 'select',
+          authenticated: !!session
+        }
+      });
+
+      if (testError) {
+        console.error('Blog Posts Table Error:', {
+          code: testError.code,
+          message: testError.message,
+          details: testError.details
+        });
+      }
+
       // Validate required fields
       if (!formData.title?.trim()) {
         throw new Error("Title is required");
@@ -75,14 +109,12 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
 
       const slug = formData.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") ?? "";
       
-      // Ensure tags is always a valid array
-      const tags = Array.isArray(formData.tags) ? formData.tags : [];
-      
-      // Clean and prepare tags
-      const cleanedTags = tags
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0)
-        .map(tag => tag.replace(/[^a-zA-Z0-9\s-]/g, ''));
+      const cleanedTags = Array.isArray(formData.tags) 
+        ? formData.tags
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0)
+            .map(tag => tag.replace(/[^a-zA-Z0-9\s-]/g, ''))
+        : [];
 
       const preparedData = {
         title: formData.title.trim(),
@@ -92,9 +124,18 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
         slug,
         author_id: userId,
         updated_at: new Date().toISOString(),
-        // Ensure we send null for empty arrays to let PostgreSQL use its default
-        tags: cleanedTags.length > 0 ? cleanedTags : null
+        tags: cleanedTags,
+        featured_image: formData.featured_image || null,
+        meta_description: formData.meta_description || null
       };
+
+      // Debug: Log detailed information about the submission
+      console.log('Submission Debug:', {
+        rawTags: formData.tags,
+        cleanedTags,
+        preparedDataTags: preparedData.tags,
+        fullPreparedData: preparedData
+      });
 
       // Debug log to see what we're sending
       console.log('Sending to Supabase:', JSON.stringify(preparedData, null, 2));
@@ -116,9 +157,14 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
           description: "Blog post updated successfully",
         });
       } else {
+        const insertData = {
+          ...preparedData,
+          created_at: new Date().toISOString(),
+        };
+
+        // Use RPC call to handle array conversion
         const { data, error } = await supabase
-          .from("blog_posts")
-          .insert([{ ...preparedData, created_at: new Date().toISOString() }])
+          .rpc('create_blog_post', insertData)
           .select();
 
         if (error) {
