@@ -195,81 +195,83 @@ export default function NoticesManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Manage Notices</h1>
-        <Button onClick={handleCreateNotice}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Notice
-        </Button>
-      </div>
+    <div className="container mx-auto px-4">
+      <div className="py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Manage Notices</h1>
+          <Button onClick={handleCreateNotice}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Notice
+          </Button>
+        </div>
 
-      <div className="grid gap-4">
-        {notices.map((notice) => (
-          <Card key={notice.id} className="p-4">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  {notice.category && typeof notice.category !== 'string' && (
-                    <CategoryIcon
-                      name={notice.category.icon || "default"}
-                      className="h-4 w-4"
-                    />
-                  )}
-                  <h3 className="font-semibold">{notice.title}</h3>
+        <div className="grid gap-4">
+          {notices.map((notice) => (
+            <Card key={notice.id} className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    {notice.category && typeof notice.category !== 'string' && (
+                      <CategoryIcon
+                        name={notice.category.icon || "default"}
+                        className="h-4 w-4"
+                      />
+                    )}
+                    <h3 className="font-semibold">{notice.title}</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Created on {formatDate(notice.created_at)}
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Created on {formatDate(notice.created_at)}
-                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleToggleSponsored(notice)}
+                    className={notice.is_sponsored ? "text-yellow-500" : ""}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleTogglePublish(notice)}
+                  >
+                    {notice.published ? (
+                      <Eye className="h-4 w-4" />
+                    ) : (
+                      <EyeOff className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditNotice(notice)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteNotice(notice.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleToggleSponsored(notice)}
-                  className={notice.is_sponsored ? "text-yellow-500" : ""}
-                >
-                  <Sparkles className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleTogglePublish(notice)}
-                >
-                  {notice.published ? (
-                    <Eye className="h-4 w-4" />
-                  ) : (
-                    <EyeOff className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleEditNotice(notice)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteNotice(notice.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
 
-      {isCreateModalOpen && (
-        <NoticeForm
-          notice={selectedNotice}
-          categories={categories}
-          onClose={handleCloseNoticeModal}
-          isOpen={isCreateModalOpen}
-        />
-      )}
+        {isCreateModalOpen && (
+          <NoticeForm
+            notice={selectedNotice}
+            categories={categories}
+            onClose={handleCloseNoticeModal}
+            isOpen={isCreateModalOpen}
+          />
+        )}
+      </div>
     </div>
   );
 } 

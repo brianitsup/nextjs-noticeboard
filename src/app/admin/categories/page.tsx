@@ -154,54 +154,56 @@ export default function CategoriesManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Manage Categories</h1>
-        <Button onClick={handleCreateCategory}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Category
-        </Button>
-      </div>
+    <div className="container mx-auto px-4">
+      <div className="py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Manage Categories</h1>
+          <Button onClick={handleCreateCategory}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Category
+          </Button>
+        </div>
 
-      <div className="grid gap-4">
-        {categories.map((category) => (
-          <Card key={category.id} className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CategoryIcon
-                  name={category.icon || "default"}
-                  className="h-4 w-4"
-                />
-                <h3 className="font-semibold">{category.name}</h3>
+        <div className="grid gap-4">
+          {categories.map((category) => (
+            <Card key={category.id} className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CategoryIcon
+                    name={category.icon || "default"}
+                    className="h-4 w-4"
+                  />
+                  <h3 className="font-semibold">{category.name}</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditCategory(category)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteCategory(category.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleEditCategory(category)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteCategory(category.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
 
-      {isCategoryModalOpen && (
-        <CategoryForm
-          category={selectedCategory}
-          onClose={handleCloseCategoryModal}
-          isOpen={isCategoryModalOpen}
-        />
-      )}
+        {isCategoryModalOpen && (
+          <CategoryForm
+            category={selectedCategory}
+            onClose={handleCloseCategoryModal}
+            isOpen={isCategoryModalOpen}
+          />
+        )}
+      </div>
     </div>
   );
 } 

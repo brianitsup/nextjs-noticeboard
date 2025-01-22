@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/date-utils";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import type { UserRole } from "@/types/user";
+import { Card } from "@/components/ui/card";
 
 export default function BlogManagement() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -161,8 +162,10 @@ export default function BlogManagement() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="container mx-auto px-4">
+        <div className="flex h-screen items-center justify-center">
+          <div className="text-lg">Loading...</div>
+        </div>
       </div>
     );
   }
@@ -172,81 +175,80 @@ export default function BlogManagement() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Manage Blog Posts</h2>
+    <div className="container mx-auto px-4">
+      <div className="py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Manage Blog Posts</h1>
           {['admin', 'editor'].includes(userRole) && (
-            <Button onClick={handleCreatePost} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" /> Create Post
+            <Button onClick={handleCreatePost}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Post
             </Button>
           )}
         </div>
 
-        <div className="rounded-lg border">
+        <Card className="overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <table className="min-w-full divide-y divide-border">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Title
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Created At
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody className="divide-y divide-border bg-background">
                 {posts.map((post) => (
                   <tr key={post.id}>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium">
                         {post.title}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-muted-foreground">
                         {post.excerpt}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm text-gray-500">
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-muted-foreground">
                         {formatDate(post.created_at)}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm text-gray-500">
+                    <td className="px-6 py-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleTogglePublish(post)}
+                        className={post.published ? "text-green-600" : ""}
+                      >
+                        {post.published ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
-                          size="sm"
-                          onClick={() => handleTogglePublish(post)}
-                          className={post.published ? "text-green-600" : "text-gray-400"}
-                        >
-                          {post.published ? (
-                            <Eye className="h-4 w-4" />
-                          ) : (
-                            <EyeOff className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
+                          size="icon"
                           onClick={() => handleEditPost(post)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         {['admin', 'editor'].includes(userRole) && (
                           <Button
-                            variant="outline"
-                            size="sm"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleDeletePost(post.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -259,7 +261,7 @@ export default function BlogManagement() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
