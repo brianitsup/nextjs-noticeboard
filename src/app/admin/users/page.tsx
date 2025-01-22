@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -250,92 +251,89 @@ export default function UserManagement() {
     setIsCreateModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsCreateModalOpen(false);
-    setSelectedUser(null);
-  };
-
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Manage Users</h2>
-          <Button onClick={handleCreateUser} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" /> Create User
-          </Button>
-        </div>
-
-        <div className="rounded-lg border">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Created At
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.email}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm text-gray-500">
-                        {user.role}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm text-gray-500">
-                        {formatDate(user.created_at)}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditUser(user)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteUser(user.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Users</h1>
+        <Button onClick={handleCreateUser}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create User
+        </Button>
       </div>
 
-      <Dialog open={isCreateModalOpen} onOpenChange={handleCloseModal}>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-border">
+            <thead>
+              <tr className="bg-muted/50">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Created At
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border bg-background">
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium">
+                      {user.email}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-muted-foreground capitalize">
+                      {user.role}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-muted-foreground">
+                      {formatDate(user.created_at)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditUser(user)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteUser(user.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {selectedUser ? "Edit User" : "Create New User"}
+              {selectedUser ? "Edit User" : "Create User"}
             </DialogTitle>
           </DialogHeader>
-          <UserForm user={selectedUser ?? undefined} onClose={handleCloseModal} />
+          <UserForm
+            user={selectedUser ?? undefined}
+            onClose={() => setIsCreateModalOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>

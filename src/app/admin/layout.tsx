@@ -1,9 +1,49 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { User, LogOut } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  FileText, 
+  FolderTree, 
+  BookOpen, 
+  Users, 
+  User, 
+  Settings,
+  LogOut,
+  Database
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
+
+const sidebarNavItems = [
+  {
+    title: "Dashboard",
+    href: "/admin/dashboard",
+    icon: LayoutDashboard
+  },
+  {
+    title: "Notices",
+    href: "/admin/notices",
+    icon: FileText
+  },
+  {
+    title: "Categories",
+    href: "/admin/categories",
+    icon: FolderTree
+  },
+  {
+    title: "Blog",
+    href: "/admin/blog",
+    icon: BookOpen
+  },
+  {
+    title: "Users",
+    href: "/admin/users",
+    icon: Users
+  }
+];
 
 export default function AdminLayout({
   children,
@@ -13,6 +53,27 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    // Check Supabase connection
+    const checkConnection = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('health_check')
+          .select('*')
+          .limit(1);
+        setIsOnline(!error);
+      } catch {
+        setIsOnline(false);
+      }
+    };
+
+    checkConnection();
+    const interval = setInterval(checkConnection, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [supabase]);
 
   useEffect(() => {
     let isRedirecting = false;
@@ -21,10 +82,13 @@ export default function AdminLayout({
       if (isRedirecting) return;
 
       try {
-        // Get the current session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session }, error: authError } = await supabase.auth.getSession();
         
-        if (sessionError || !session) {
+        if (authError) {
+          throw authError;
+        }
+
+        if (!session) {
           isRedirecting = true;
           router.replace('/auth/admin-signin');
           return;
@@ -63,67 +127,98 @@ export default function AdminLayout({
   }, [router, pathname, supabase]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
-          <div className="mr-4 flex">
-            <a href="/admin/dashboard" className="mr-6 flex items-center space-x-2">
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-full flex-col">
+          {/* Brand */}
+          <div className="border-b p-6">
+            <Link href="/admin/dashboard" className="flex items-center space-x-2">
               <span className="font-bold">Notice Board Admin</span>
-            </a>
-            <nav className="flex items-center space-x-6 text-sm font-medium">
-              <a
-                href="/admin/dashboard"
-                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/dashboard' ? 'text-foreground' : 'text-foreground/60'}`}
-              >
-                Dashboard
-              </a>
-              <a
-                href="/admin/notices"
-                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/notices' ? 'text-foreground' : 'text-foreground/60'}`}
-              >
-                Notices
-              </a>
-              <a
-                href="/admin/categories"
-                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/categories' ? 'text-foreground' : 'text-foreground/60'}`}
-              >
-                Categories
-              </a>
-              <a
-                href="/admin/blog"
-                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/blog' ? 'text-foreground' : 'text-foreground/60'}`}
-              >
-                Blog
-              </a>
-              <a
-                href="/admin/users"
-                className={`transition-colors hover:text-foreground/80 ${pathname === '/admin/users' ? 'text-foreground' : 'text-foreground/60'}`}
-              >
-                Users
-              </a>
-            </nav>
+            </Link>
           </div>
-          <div className="flex-1" />
-          <div className="flex items-center space-x-6">
-            <a
-              href="/admin/profile"
-              className={`flex h-8 w-8 items-center justify-center transition-colors hover:text-foreground/80 ${pathname === '/admin/profile' ? 'text-foreground' : 'text-foreground/60'}`}
-            >
-              <User className="h-4 w-4" />
-            </a>
-            <form action="/auth/signout" method="POST">
-              <button
-                type="submit"
-                className="flex h-8 w-8 items-center justify-center transition-colors hover:text-foreground/80 text-foreground/60"
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 p-4">
+            {sidebarNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    pathname === item.href
+                      ? "bg-secondary text-secondary-foreground"
+                      : "text-muted-foreground hover:bg-secondary/50 hover:text-secondary-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.title}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Bottom section */}
+          <div className="border-t p-4">
+            <div className="space-y-1">
+              <Link
+                href="/admin/profile"
+                className={cn(
+                  "flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  pathname === '/admin/profile'
+                    ? "bg-secondary text-secondary-foreground"
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-secondary-foreground"
+                )}
               >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </form>
+                <User className="h-4 w-4" />
+                <span>Profile</span>
+              </Link>
+              <Link
+                href="/admin/settings"
+                className={cn(
+                  "flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  pathname === '/admin/settings'
+                    ? "bg-secondary text-secondary-foreground"
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-secondary-foreground"
+                )}
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+              <form action="/auth/signout" method="POST">
+                <button
+                  type="submit"
+                  className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-secondary-foreground"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Credits and Status */}
+          <div className="border-t p-4">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center space-x-1">
+                <Database className="h-3 w-3" />
+                <span>
+                  {isOnline ? 'Connected' : 'Offline'}
+                </span>
+              </div>
+              <span>© 2024 Notice Board</span>
+            </div>
           </div>
         </div>
-      </header>
-      <main className="flex-1 container py-6">
-        {children}
+      </aside>
+
+      {/* Main content */}
+      <main className="pl-64 w-full">
+        <div className="h-full">
+          {children}
+        </div>
       </main>
     </div>
   );
