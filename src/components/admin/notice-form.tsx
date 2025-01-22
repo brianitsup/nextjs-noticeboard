@@ -104,7 +104,7 @@ export function NoticeForm({ notice, categories, onClose, isOpen }: NoticeFormPr
         ...rest,
         expires_at: expiresAt,
         posted_at: new Date().toISOString(),
-        posted_by: session.user.email,
+        posted_by: session.user.id,
         created_by: session.user.id,
         published: true,
       }
@@ -125,7 +125,10 @@ export function NoticeForm({ notice, categories, onClose, isOpen }: NoticeFormPr
           .from("notices")
           .insert([noticeData])
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error details:", error);
+          throw error;
+        }
         toast({
           title: "Success",
           description: "Notice created successfully",
