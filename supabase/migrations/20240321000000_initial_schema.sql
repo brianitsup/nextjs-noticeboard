@@ -150,9 +150,9 @@ ALTER TABLE public.notices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 
 -- Basic RLS policies
-CREATE POLICY "Users can read all categories"
+DROP POLICY IF EXISTS "Users can read all categories" ON public.categories;
+CREATE POLICY "Anyone can read categories"
     ON public.categories FOR SELECT
-    TO authenticated
     USING (true);
 
 CREATE POLICY "Admin users can manage categories"
