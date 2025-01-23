@@ -1,91 +1,129 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { createClient } from '@supabase/supabase-js'
 import { CategoryFilter } from "@/components/category-filter"
 import { NoticeCard } from "@/components/notice-card"
 import { Carousel } from "@/components/carousel"
 import type { Notice, Category } from "@/types/notice"
 
-export default function Home() {
-  const searchParams = useSearchParams()
-  const [notices, setNotices] = useState<Notice[]>([])
-  const [paidNotices, setPaidNotices] = useState<Notice[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || "")
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [noticesRes, categoriesRes] = await Promise.all([
-          fetch('/api/notices'),
-          fetch('/api/categories')
-        ])
-
-        if (!noticesRes.ok || !categoriesRes.ok) {
-          throw new Error('Failed to fetch data')
-        }
-
-        const noticesData = await noticesRes.json()
-        const categoriesData = await categoriesRes.json()
-
-        // Transform the data to match the Notice type
-        const transformNotice = (notice: any): Notice => ({
-          ...notice,
-          created_at: new Date(notice.created_at),
-          posted_at: notice.posted_at ? new Date(notice.posted_at) : undefined,
-          expires_at: notice.expires_at ? new Date(notice.expires_at) : undefined,
-          event_date: notice.event_date ? new Date(notice.event_date) : undefined,
-        })
-
-        setNotices((noticesData.regular || []).map(transformNotice))
-        setPaidNotices((noticesData.paid || []).map(transformNotice))
-        setCategories(categoriesData || [])
-      } catch (error) {
-        console.error('Error fetching data:', error)
-      } finally {
-        setIsLoading(false)
-      }
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
     }
+  }
+)
 
-    fetchData()
-  }, [])
+export const dynamic = 'force-dynamic'
 
-  const handleCategoryChange = (categoryId: string) => {
-    setSelectedCategory(categoryId)
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
+  const categoryId = searchParams.category as string
+  const searchQuery = (searchParams.q as string)?.toLowerCase()
+  const sortBy = searchParams.sort as string
+
+  // Fetch paid notices
+  const { data: paidNotices, error: paidError } = await supabase
+    .from('notices')
+    .select(`
+      *,
+      categories:category_id (
+        id,
+        name,
+        icon,
+        slug
+      )
+    `)
+    .eq('is_published', true)
+    .eq('is_paid', true)
+    .order('created_at', { ascending: false })
+
+  if (paidError) {
+    console.error('Error fetching paid notices:', paidError)
   }
 
-  const filteredNotices = notices.filter(notice => {
-    const matchesCategory = !selectedCategory || notice.category_id === selectedCategory
-    const searchQuery = searchParams.get('q')?.toLowerCase()
-    const matchesSearch = !searchQuery || 
-      notice.title.toLowerCase().includes(searchQuery) || 
-      notice.content.toLowerCase().includes(searchQuery)
-    return matchesCategory && matchesSearch
-  })
+  // Fetch regular notices
+  let query = supabase
+    .from('notices')
+    .select(`
+      *,
+      categories:category_id (
+        id,
+        name,
+        icon,
+        slug
+      )
+    `)
+    .eq('is_published', true)
+    .eq('is_paid', false)
 
-  const sortedNotices = [...filteredNotices].sort((a, b) => {
-    const sortBy = searchParams.get('sort')
-    if (sortBy === 'oldest') {
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    }
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  })
-
-  if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+  // Add category filter if specified
+  if (categoryId) {
+    query = query.eq('category_id', categoryId)
   }
+
+  const { data: regularNotices, error: regularError } = await query.order('created_at', { ascending: sortBy === 'oldest' })
+
+  if (regularError) {
+    console.error('Error fetching regular notices:', regularError)
+    throw new Error('Failed to fetch notices')
+  }
+
+  // Fetch categories
+  const { data: categories, error: categoriesError } = await supabase
+    .from('categories')
+    .select('*')
+
+  if (categoriesError) {
+    console.error('Error fetching categories:', categoriesError)
+    throw new Error('Failed to fetch categories')
+  }
+
+  // Transform notices
+  const transformNotice = (notice: any): Notice => ({
+    id: notice.id,
+    title: notice.title,
+    content: notice.content,
+    priority: notice.priority || 'low',
+    category: notice.categories || {
+      id: notice.category_id,
+      name: 'Uncategorized',
+      icon: 'FileText',
+      slug: 'uncategorized'
+    },
+    category_id: notice.category_id,
+    posted_at: notice.published_at || notice.created_at,
+    expires_at: notice.expires_at,
+    created_at: notice.created_at,
+    is_published: notice.is_published,
+    is_sponsored: notice.is_paid || false
+  })
+
+  const transformedPaidNotices = (paidNotices || []).map(transformNotice)
+  const transformedRegularNotices = (regularNotices || []).map(transformNotice)
+
+  // Filter notices by search query if provided
+  const filteredNotices = searchQuery
+    ? transformedRegularNotices.filter(notice =>
+        notice.title.toLowerCase().includes(searchQuery) ||
+        notice.content.toLowerCase().includes(searchQuery)
+      )
+    : transformedRegularNotices
 
   return (
     <div className="min-h-screen">
       {/* Featured Notices */}
-      {paidNotices.length > 0 && (
+      {transformedPaidNotices.length > 0 && (
         <div className="w-full bg-muted/50">
           <div className="container py-8">
             <h2 className="text-2xl font-semibold mb-6">Featured Notices</h2>
             <Carousel>
-              {paidNotices.map((notice) => (
+              {transformedPaidNotices.map((notice) => (
                 <div key={notice.id} className="keen-slider__slide">
                   <NoticeCard notice={notice} isPaid />
                 </div>
@@ -101,19 +139,18 @@ export default function Home() {
           <div className="order-last lg:order-first">
             <CategoryFilter
               categories={categories}
-              selectedCategory={selectedCategory}
-              onCategoryChange={handleCategoryChange}
+              selectedCategory={categoryId}
             />
           </div>
 
           {/* Regular Notices */}
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold">All Notices</h2>
-            {sortedNotices.length === 0 ? (
+            {filteredNotices.length === 0 ? (
               <p className="text-muted-foreground">No notices found.</p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
-                {sortedNotices.map((notice) => (
+                {filteredNotices.map((notice) => (
                   <NoticeCard key={notice.id} notice={notice} />
                 ))}
               </div>

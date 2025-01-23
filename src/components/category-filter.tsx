@@ -25,18 +25,26 @@ interface Category {
 interface CategoryFilterProps {
   categories: Category[];
   selectedCategory?: string;
-  onCategoryChange: (category: string) => void;
 }
 
 export function CategoryFilter({
   categories,
   selectedCategory,
-  onCategoryChange,
 }: CategoryFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = React.useState(searchParams.get("q") || "");
   const [sortBy, setSortBy] = React.useState(searchParams.get("sort") || "newest");
+
+  const handleCategoryChange = (categoryId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (categoryId) {
+      params.set("category", categoryId);
+    } else {
+      params.delete("category");
+    }
+    router.push(`/?${params.toString()}`);
+  };
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -100,7 +108,7 @@ export function CategoryFilter({
               "justify-start font-normal rounded-none px-2",
               !selectedCategory && "bg-muted/50"
             )}
-            onClick={() => onCategoryChange("")}
+            onClick={() => handleCategoryChange("")}
           >
             <FileText className="mr-2 h-4 w-4" />
             All Notices
@@ -124,7 +132,7 @@ export function CategoryFilter({
                   "justify-start font-normal rounded-none px-2",
                   selectedCategory === category.id && "bg-muted/50"
                 )}
-                onClick={() => onCategoryChange(category.id)}
+                onClick={() => handleCategoryChange(category.id)}
               >
                 <IconComponent className="mr-2 h-4 w-4" />
                 {category.name}

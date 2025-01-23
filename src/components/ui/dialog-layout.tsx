@@ -30,11 +30,11 @@ export function DialogLayout({
 }: DialogLayoutProps) {
   return (
     <Dialog {...props}>
-      <DialogContent className={cn("p-0 gap-0", contentClassName)}>
-        <div className={cn("grid lg:grid-cols-[300px_1fr] h-full", className)}>
+      <DialogContent className={cn("sm:max-w-[900px] p-0 gap-0", contentClassName)}>
+        <div className={cn("grid lg:grid-cols-[300px_1fr]", className)}>
           {/* Left Panel */}
           {leftPanel && (
-            <div className="bg-muted/50 p-6 lg:p-8 lg:border-r">
+            <div className="bg-muted/50 p-6 lg:p-8 border-b lg:border-b-0 lg:border-r">
               {title || description ? (
                 <DialogHeader className="space-y-3">
                   {title && <DialogTitle>{title}</DialogTitle>}
@@ -46,7 +46,7 @@ export function DialogLayout({
           )}
 
           {/* Right Panel - Content */}
-          <div className="p-6 lg:p-8 lg:pt-6">
+          <div className="p-6 lg:p-8">
             {!leftPanel && (title || description) && (
               <DialogHeader className="space-y-3 mb-6">
                 {title && <DialogTitle>{title}</DialogTitle>}

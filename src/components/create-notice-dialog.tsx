@@ -197,59 +197,16 @@ export default function CreateNoticeDialog({ onClose }: CreateNoticeDialogProps)
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Title</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter notice title" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="content"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Content</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Enter notice content"
-                    className="min-h-[150px] resize-none"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid sm:grid-cols-2 gap-6">
+          <div className="space-y-4">
             <FormField
               control={form.control}
-              name="category_id"
+              name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories.map((category: any) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel className="text-sm font-medium">Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter a clear and descriptive title" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -257,97 +214,143 @@ export default function CreateNoticeDialog({ onClose }: CreateNoticeDialogProps)
 
             <FormField
               control={form.control}
-              name="priority"
+              name="content"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Priority</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel className="text-sm font-medium">Content</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Provide all relevant details for your notice"
+                      className="min-h-[180px] resize-none"
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="event_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{selectedCategory?.date_label || 'Date & Time (Optional)'}</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <DatePicker
-                      selected={field.value}
-                      onChange={(date: Date) => field.onChange(date)}
-                      showTimeSelect
-                      timeFormat="HH:mm"
-                      timeIntervals={15}
-                      dateFormat="MMMM d, yyyy h:mm aa"
-                      timeCaption="Time"
-                      placeholderText="Select date and time"
-                      minDate={selectedCategory?.slug === 'events' ? new Date() : undefined}
-                      className={cn(
-                        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      )}
-                      customInput={
-                        <Input
-                          suffix={
-                            <div className="flex gap-2 text-muted-foreground">
-                              <Clock className="h-4 w-4" />
-                              <CalendarIcon className="h-4 w-4" />
-                            </div>
-                          }
+          <div className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="category_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category: any) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Priority</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {selectedCategory?.requires_date && (
+              <FormField
+                control={form.control}
+                name="event_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      {selectedCategory.date_label || 'Date & Time'}
+                    </FormLabel>
+                    <FormControl>
+                      <div className="grid sm:grid-cols-[1fr_auto] gap-2">
+                        <DatePicker
+                          selected={field.value}
+                          onChange={(date: Date) => field.onChange(date)}
+                          showTimeSelect
+                          dateFormat="MMMM d, yyyy h:mm aa"
+                          placeholderText="Select date and time"
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         />
-                      }
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="px-3"
+                          onClick={() => field.onChange(null)}
+                        >
+                          <Clock className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      {selectedCategory.date_description}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
+              name="submitter_email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Your Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="Enter your email address"
+                      {...field}
                     />
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  {selectedCategory?.date_description}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  </FormControl>
+                  <FormDescription className="text-xs">
+                    We'll use this to contact you if we need any clarification.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="submitter_email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Your Email</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="email" 
-                    placeholder="Enter your email address" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormDescription>
-                  We'll use this to contact you if we need any clarification.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="pt-4">
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="w-full"
+          <div className="flex justify-end gap-4 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
             >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? "Submitting..." : "Submit for Review"}
             </Button>
           </div>
