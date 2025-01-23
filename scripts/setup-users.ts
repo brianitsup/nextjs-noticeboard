@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, User } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -20,7 +20,13 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
-const users = [
+interface SetupUser {
+  email: string;
+  password: string;
+  role: 'admin' | 'editor' | 'moderator';
+}
+
+const users: SetupUser[] = [
   {
     email: 'admin@noticeboard.com',
     password: 'admin123',
@@ -51,8 +57,13 @@ async function setupUsers() {
         continue;
       }
 
-      const existingUser = userList.users.find(u => u.email === user.email);
-      let userId;
+      if (!userList?.users) {
+        console.error('No users list returned');
+        continue;
+      }
+
+      const existingUser = userList.users.find((u: User) => u.email === user.email);
+      let userId: string;
 
       if (existingUser) {
         console.log(`Updating existing user ${user.email}`);
@@ -84,6 +95,11 @@ async function setupUsers() {
 
         if (createError) {
           console.error(`Error creating user ${user.email}:`, createError);
+          continue;
+        }
+
+        if (!newUser?.user) {
+          console.error('No user data returned');
           continue;
         }
 

@@ -10,11 +10,13 @@ import type {
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
 
-type ToasterToast = ToastProps & {
+type ToasterToast = {
   id: string
-  title?: React.ReactNode
-  description?: React.ReactNode
-  action?: ToastActionElement
+  title?: string
+  description?: string
+  action?: React.ReactNode
+  variant?: "default" | "destructive"
+  duration?: number
 }
 
 const actionTypes = {
@@ -108,7 +110,6 @@ export const reducer = (state: State, action: Action): State => {
           t.id === toastId || toastId === undefined
             ? {
                 ...t,
-                open: false,
               }
             : t
         ),
@@ -156,10 +157,6 @@ function toast({ ...props }: Toast) {
     toast: {
       ...props,
       id,
-      open: true,
-      onOpenChange: (open: boolean) => {
-        if (!open) dismiss()
-      },
     },
   })
 

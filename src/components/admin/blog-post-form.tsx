@@ -26,7 +26,13 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
       content: "",
       excerpt: "",
       published: false,
-      tags: [],
+      tags: "",
+      meta_description: "",
+      featured_image: "",
+      slug: "",
+      author_id: "",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   );
 
@@ -109,13 +115,6 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
 
       const slug = formData.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") ?? "";
       
-      const cleanedTags = Array.isArray(formData.tags) 
-        ? formData.tags
-            .map(tag => tag.trim())
-            .filter(tag => tag.length > 0)
-            .map(tag => tag.replace(/[^a-zA-Z0-9\s-]/g, ''))
-        : [];
-
       const preparedData = {
         title: formData.title.trim(),
         content: formData.content.trim(),
@@ -124,17 +123,14 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
         slug,
         author_id: userId,
         updated_at: new Date().toISOString(),
-        tags: cleanedTags,
-        featured_image: formData.featured_image || null,
-        meta_description: formData.meta_description || null
+        tags: formData.tags || "",
+        featured_image: formData.featured_image || "",
+        meta_description: formData.meta_description || ""
       };
 
       // Debug: Log detailed information about the submission
       console.log('Submission Debug:', {
-        rawTags: formData.tags,
-        cleanedTags,
-        preparedDataTags: preparedData.tags,
-        fullPreparedData: preparedData
+        preparedData
       });
 
       // Debug log to see what we're sending
@@ -253,58 +249,42 @@ export function BlogPostForm({ isOpen, onClose, post }: BlogPostFormProps) {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="published"
-              checked={formData.published}
-              onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-              className="h-4 w-4 rounded border-gray-300"
+          <div className="space-y-2">
+            <Label htmlFor="meta_description">Meta Description</Label>
+            <Input
+              id="meta_description"
+              value={formData.meta_description || ""}
+              onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+              placeholder="SEO meta description"
             />
-            <Label htmlFor="published">Published</Label>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tags">Tags (comma-separated)</Label>
+            <Label htmlFor="featured_image">Featured Image URL</Label>
             <Input
-              id="tags"
-              value={Array.isArray(formData.tags) ? formData.tags.join(", ") : ""}
-              onChange={(e) => {
-                const inputValue = e.target.value;
-                // Handle empty input case
-                if (!inputValue || !inputValue.trim()) {
-                  setFormData({ ...formData, tags: [] });
-                  return;
-                }
-
-                // Split by comma, clean up, and ensure unique values
-                const newTags = Array.from(
-                  new Set(
-                    inputValue
-                      .split(",")
-                      .map(tag => tag.trim())
-                      .filter(tag => tag.length > 0)
-                      .map(tag => tag.replace(/[^a-zA-Z0-9\s-]/g, ''))
-                  )
-                );
-
-                setFormData({ ...formData, tags: newTags });
-              }}
-              placeholder="Enter tags separated by commas (letters, numbers, spaces, and hyphens only)"
+              id="featured_image"
+              value={formData.featured_image || ""}
+              onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
+              placeholder="URL of the featured image"
             />
-            <p className="text-sm text-gray-500">
-              Current tags: {Array.isArray(formData.tags) && formData.tags.length > 0 
-                ? formData.tags.join(", ") 
-                : "No tags"}
-            </p>
           </div>
 
-          <div className="flex justify-end space-x-2">
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags</Label>
+            <Input
+              id="tags"
+              value={formData.tags || ""}
+              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+              placeholder="Comma-separated tags"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-4">
             <Button type="button" variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : post ? "Update" : "Create"}
+              {isLoading ? "Saving..." : (post ? "Update" : "Create")}
             </Button>
           </div>
         </form>
