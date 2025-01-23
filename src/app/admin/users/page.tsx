@@ -55,7 +55,7 @@ export default function UserManagement() {
       // Get role from database
       const { data: userData, error: roleError } = await supabase
         .from('users')
-        .select('role')
+        .select('role:roles!role_id(name)')
         .eq('id', session.user.id)
         .single();
 
@@ -69,7 +69,8 @@ export default function UserManagement() {
         return;
       }
 
-      const role = userData?.role || 'user';
+      const roleData = Array.isArray(userData?.role) ? userData?.role[0] : userData?.role;
+      const role = roleData?.name || 'user';
       const hasAccess = ['admin', 'editor', 'moderator'].includes(role);
 
       if (!hasAccess) {
@@ -84,9 +85,21 @@ export default function UserManagement() {
       setCurrentUserRole(role as UserRole);
 
       // Fetch users after role is confirmed
-      const { data: users, error: usersError } = await supabase
+      const { data: rawUsers, error: usersError } = await supabase
         .from('users')
-        .select('id, email, role, created_at')
+        .select(`
+          id,
+          email,
+          role_id,
+          role:roles!role_id(
+            id,
+            name,
+            description,
+            created_at,
+            updated_at
+          ),
+          created_at
+        `)
         .order('created_at', { ascending: false });
 
       if (usersError) {
@@ -103,7 +116,13 @@ export default function UserManagement() {
         return;
       }
 
-      setUsers(users || []);
+      // Transform the data to match the User type
+      const users = (rawUsers || []).map(user => ({
+        ...user,
+        role: Array.isArray(user.role) ? user.role[0] : user.role
+      })) as User[];
+
+      setUsers(users);
     } catch (error) {
       console.error("Error in checkAuthAndFetchData:", {
         error,
@@ -153,7 +172,7 @@ export default function UserManagement() {
     const [formData, setFormData] = useState({
       email: user?.email ?? "",
       password: "",
-      role: user?.role ?? "editor" as UserRole,
+      role: (user?.role?.name ?? "editor") as UserRole,
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -162,12 +181,21 @@ export default function UserManagement() {
 
       try {
         if (user) {
+          // Get role_id for the selected role
+          const { data: roleData } = await supabase
+            .from('roles')
+            .select('id')
+            .eq('name', formData.role)
+            .single();
+
+          if (!roleData) throw new Error('Role not found');
+
           // Update existing user
           const { error: updateError } = await supabase
             .from('users')
             .update({
               email: formData.email,
-              role: formData.role
+              role_id: roleData.id
             })
             .eq('id', user.id);
 
@@ -363,7 +391,7 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-muted-foreground capitalize">
-                      {user.role}
+                      {user.role?.name ?? 'unknown'}
                     </div>
                   </td>
                   <td className="px-6 py-4">

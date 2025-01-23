@@ -54,7 +54,9 @@ export const createClient = () => {
     throw new Error('Missing Supabase environment variables');
   }
 
+  const isDevelopment = process.env.NODE_ENV === 'development';
   console.debug(`[Supabase ${new Date().toISOString()}] Creating new client instance for URL:`, process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.debug(`[Supabase ${new Date().toISOString()}] Environment:`, isDevelopment ? 'development' : 'production');
 
   try {
     supabaseInstance = createClientComponentClient<Database>();
@@ -100,11 +102,14 @@ export const createClient = () => {
       }
     };
 
-    void testConnection();
+    // Only run connection tests in development
+    if (isDevelopment) {
+      void testConnection();
+    }
 
     return supabaseInstance;
   } catch (error) {
     logSupabaseError(error, 'Client creation failed');
     throw error;
   }
-}; 
+};

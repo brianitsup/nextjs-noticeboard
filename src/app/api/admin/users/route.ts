@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import type { Database } from '../../../../types/supabase';
 
 // Export config for Next.js Edge Runtime
 export const runtime = 'edge';
@@ -10,12 +11,15 @@ export const runtime = 'edge';
 const getSupabaseAdmin = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error('Required environment variables are missing');
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  console.debug(`[Admin API ${new Date().toISOString()}] Initializing admin client for environment:`, isDevelopment ? 'development' : 'production');
+
+  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -23,6 +27,54 @@ const getSupabaseAdmin = () => {
     }
   });
 };
+
+// Get the regular client for user context
+const getSupabaseClient = () => {
+  return createRouteHandlerClient<Database>({ cookies });
+};
+
+// Export the GET handler
+export async function GET(request: Request) {
+  try {
+    const adminClient = getSupabaseAdmin();
+    const userClient = getSupabaseClient();
+
+    // Verify the user has admin access
+    const { data: { session }, error: authError } = await userClient.auth.getSession();
+    if (authError || !session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get user role
+    const { data: userData, error: userError } = await userClient
+      .from('users')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError || !userData || userData.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Get all users
+    const { data: users, error: usersError } = await adminClient
+      .from('users')
+      .select('*');
+
+    if (usersError) {
+      console.error('Error fetching users:', usersError);
+      return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+    }
+
+    return NextResponse.json({ users });
+  } catch (error) {
+    console.error('Admin API Error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(req: Request) {
   try {
